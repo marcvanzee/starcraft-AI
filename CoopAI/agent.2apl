@@ -1,0 +1,14 @@
+/*
+ * This is an example model for a new 2APL project
+ */
+BeliefUpdates:
+	{true} DoPushup(S, X) { not count(S), count(S+X) }
+Beliefs:
+	count(0).
+Goals:
+	pushup(10)
+PG-rules:
+	pushup(T) <- not count(T) | {
+		[B(count(R));
+		DoPushup(R, 1)]
+	}
