@@ -6,9 +6,11 @@ BeliefUpdates:
 Beliefs:
 	count(0).
 Goals:
-	pushup(10)
+	start
 PG-rules:
-	pushup(T) <- not count(T) | {
-		[B(count(R));
-		DoPushup(R, 1)]
+	
+	start <- true |
+	{
+		@starcraft(start(),_)
 	}
+
