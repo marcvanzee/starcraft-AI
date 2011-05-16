@@ -59,9 +59,12 @@ public class ExampleAIClient implements BWAPIEventListener {
 		System.out.println("Game Started");
 		
 		bwapi.enableUserInput();
-		bwapi.enablePerfectInformation();
+		//bwapi.enablePerfectInformation();
+		
 		bwapi.setGameSpeed(0);
-		bwapi.loadMapData(true);
+		
+		//A value of true tends to freeze the starcraft game.
+		bwapi.loadMapData(false);
 
 		// reset agent state
 		claimed.clear();

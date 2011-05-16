@@ -43,5 +43,10 @@ public class Env extends apapl.Environment
 	 {
 		return new APLList(new APLIdent(b ? "true" : "false"));
 	 }
-
+	 
+	 public static void main(String[] args)
+	 {
+		 new eisbot.proxy.ExampleAIClient();
+	 }
+	 
 }
