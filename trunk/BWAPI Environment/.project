@@ -18,7 +18,7 @@
 		<link>
 			<name>license</name>
 			<type>2</type>
-			<location>C:/Documents and Settings/Roemer Vlasveld/workspace/BWAPI Environment/resources/license</location>
+			<locationURI>PROJECT_LOC/resources/license</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
