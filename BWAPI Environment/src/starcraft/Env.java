@@ -90,6 +90,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		 APLFunction event = new APLFunction(name, new APLIdent("true"));
 		 super.throwEvent(event, _agentNames);
 	 }
+	
+	 
+	 
+	 
+	 
+	 
 	 
 	///BWAPI Event Listener functions. 
 	@Override
