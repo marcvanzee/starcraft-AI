@@ -2,6 +2,8 @@ package starcraft;
 
 import java.util.logging.Logger;
 
+import eisbot.proxy.ExampleAIClient;
+
 import apapl.data.APLIdent;
 import apapl.data.APLList;
 import apapl.data.APLListVar;
@@ -12,7 +14,15 @@ public class Env extends apapl.Environment
 {
 	
 	 private Logger _logger = Logger.getLogger("EMarket."+Env.class.getName());
-	
+	 private Environment environment;
+	 
+	 public Env()
+	 {
+		 System.out.println("Loading Environment");
+		 environment = new Environment();
+		 System.out.println("Environment loaded");
+	 }
+	 
 	 /* Test method for logging*/
 	 public synchronized Term log(String agentName,APLIdent var)
 	 {
@@ -35,7 +45,8 @@ public class Env extends apapl.Environment
 	 /* Test method for starting ExampleAICLient */
 	 public synchronized Term start(String agentName)
 	 {
-		 eisbot.proxy.ExampleAIClient a = new eisbot.proxy.ExampleAIClient();
+		 System.out.println("going to perform test method");
+		 environment.testMethod();
 		 return wrapBoolean(true);
 	 }
 	 
