@@ -1,5 +1,5 @@
 <apaplmas>
   <environment name="starcraft" file="ExampleAIClient.jar"/>
-  <agent name="pushup" file="agent.2apl"/>
+  <agent name="officer1" file="agent.2apl"/>
 </apaplmas>
 

@@ -2,15 +2,51 @@
  * This is an example model for a new 2APL project
  */
 BeliefUpdates:
-	{true} DoPushup(S, X) { not count(S), count(S+X) }
+	{true} EnvironmentLoaded() 	{environmentLoaded}
+	{true} Connected()  {connected}
+	{true} GameStarted() {gameStarted}
+	{true} EndGame()	{winGame}
 Beliefs:
 	count(0).
 Goals:
-	start
-PG-rules:
+	environmentLoaded
 	
-	start <- true |
-	{
-		@starcraft(start(),_)
-	}
+PG-rules:
 
+environmentLoaded <- true |
+{
+	@starcraft(start(),_);
+	adopta(connected);
+	EnvironmentLoaded()
+}
+
+winGame <- true |
+{
+	print(defeatEnemy);
+	skip;
+	EndGame()
+}
+
+PC-rules:		
+    
+    %Note the use of a function with parameter as events, since functions with no parameters are not supported.
+	event(connected(_),starcraft) <- true |
+	{
+		adopta(gameStarted);
+		Connected();
+		skip
+	}
+	
+	event(gameStarted(_),starcraft) <- true |
+	{
+		adopta(winGame);
+		GameStarted();
+		skip
+	}
+		
+	event( X, _) <- true |
+	{
+		print(event(X))
+	}
+	
+	
