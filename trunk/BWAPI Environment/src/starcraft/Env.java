@@ -1,10 +1,15 @@
 package starcraft;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.ExampleAIClient;
 import eisbot.proxy.JNIBWAPI;
+import eisbot.proxy.model.*;
+import eisbot.proxy.types.*;
 
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -23,6 +28,11 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 //The agent names.
 	 private String[] _agentNames = {"officer1"};
 	 
+	 
+	 // List of desired actions per officer
+	 private ArrayList<Action> _actions;
+	 
+	 //private 
 	 
 	 public Env()
 	 {
@@ -114,6 +124,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void gameUpdate() {
 		// TODO Auto-generated method stub
 		
+		
+		for( Action action : _actions )
+		{
+			action.perform( _jnibwapi );
+		}
+		
 	}
 
 	@Override
@@ -156,6 +172,10 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void unitDiscover(int unitID) {
 		// TODO Auto-generated method stub
 		
+		// For now, just send one unit to enemy
+		List<Unit> enemies = new LinkedList<Unit>();
+		enemies.add( _jnibwapi.getUnit(unitID) );
+		_actions.add( new Attack( _jnibwapi, 1, enemies ) );
 	}
 
 	@Override
