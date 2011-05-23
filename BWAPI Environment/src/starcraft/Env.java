@@ -73,7 +73,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	    	return wrapBoolean(true);
 	  }
 	 
-	 public static  APLListVar wrapBoolean( boolean b )
+	 public static APLListVar wrapBoolean( boolean b )
 	 {
 		return new APLList(new APLIdent(b ? "true" : "false"));
 	 }
