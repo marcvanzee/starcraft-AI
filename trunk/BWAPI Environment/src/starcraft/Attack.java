@@ -1,11 +1,7 @@
 package starcraft;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import eisbot.proxy.BWAPIEventListener;
-import eisbot.proxy.ExampleAIClient;
 import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
 import eisbot.proxy.types.*;
@@ -18,7 +14,7 @@ public class Attack extends Action {
 	 * @param num
 	 * @param enemies
 	 */
-	public Attack(JNIBWAPI bwapi, int officer,  int num, List<Unit> enemies )
+	public Attack(JNIAgent bwapi, int officer,  int num, List<Unit> enemies )
 	{
 		this(bwapi, officer, num, enemies, true );
 	}
@@ -30,7 +26,7 @@ public class Attack extends Action {
 	 * @param enemies
 	 * @param onlyIdle
 	 */
-	public Attack(JNIBWAPI bwapi,  int officer, int num, List<Unit> enemies, boolean onlyIdle )
+	public Attack(JNIAgent bwapi,  int officer, int num, List<Unit> enemies, boolean onlyIdle )
 	{
 		this( bwapi, officer, num, enemies, new LinkedList<UnitType>(), onlyIdle );
 	}
@@ -43,7 +39,7 @@ public class Attack extends Action {
 	 * @param withType
 	 * @param onlyIdle
 	 */
-	public Attack(JNIBWAPI bwapi, int officer, int num, List<Unit> enemies, List<UnitType> withType, boolean onlyIdle )
+	public Attack(JNIAgent bwapi, int officer, int num, List<Unit> enemies, List<UnitType> withType, boolean onlyIdle )
 	{
 		List<Unit> usingUnits = new LinkedList<Unit>();
 		for( Unit unit : bwapi.getMyUnits(officer) )

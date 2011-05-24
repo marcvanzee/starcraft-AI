@@ -6,10 +6,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import eisbot.proxy.BWAPIEventListener;
-import eisbot.proxy.ExampleAIClient;
-import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
-import eisbot.proxy.types.*;
 
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -20,98 +17,98 @@ import apapl.data.Term;
 
 public class Env extends apapl.Environment implements BWAPIEventListener
 {
+	private static final int TOTAL_AGENTS = 2;
 	
-	 private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
+	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	 private JNIBWAPI _jnibwapi;
-	 private Thread _clientThread;
-	 //The agent names.
-	 private String[] _agentNames = {"officer1"};
-	 
-	 
-	 // List of desired actions per officer
-	 private ArrayList<Action> _actions;
-	 
-	 //private 
-	 
-	 public Env()
-	 {
+	private JNIAgent _jnibwapi;
+	private Thread _clientThread;
+	
+	//The agent names.
+	private ArrayList<String> _agentNames = new ArrayList<String>();
+	
+	// List of desired actions per officer
+	private ArrayList<Action> _actions;
+	
+	public Env()
+	{
 		init();
-	 }
+	}
+	
+	/**
+	 * Initializes the environment.
+	 */
+	private void init()
+	{
+		// locations of our officers
+		int[] locations = {JNIAgent.LOC_NE, JNIAgent.LOC_NW};
 	 
-	 /**
-	  * Initializes the environment.
-	  */
-	 private void init()
-	 {
-		 // locations of our officers
-		 int[] locations = {JNIBWAPI.LOC_NE, JNIBWAPI.LOC_NW};
+		_jnibwapi = new JNIAgent(this, locations );
+		_clientThread = new Thread(new JNIBWAPIClient(_jnibwapi));
+	}
+	
+	/**
+	 * Starts the jnibwapi client thread.
+	 */
+	private void start()
+	{
+		if(!_clientThread.isAlive())
+			_clientThread.start();
+	}
 		 
-		 _jnibwapi = new JNIBWAPI(this, locations );
-		 _clientThread = new Thread(new JNIBWAPIClient(_jnibwapi));
-		 
-	 }
-	 
-	 /**
-	  * Starts the jnibwapi client thread.
-	  */
-	 private void start()
-	 {
-		 if(!_clientThread.isAlive())
-			 _clientThread.start();
-	 }
-	 	 
-	 
-	 public synchronized Term start(String agentName)
-	 {
-		start();
+	
+	public synchronized Term hello(String agentName) throws Exception
+	{
+		if (_agentNames.size() < TOTAL_AGENTS) {
+			_agentNames.add(agentName);
+			if (_agentNames.size() == TOTAL_AGENTS) {
+				start();
+			}
+		} else {
+			throw new Exception("env> ERROR: too many agents try to register");
+		}
+		
 		return wrapBoolean(true);
-	 }
-	 
-	 
-	 /* Test method for logging*/
-	 public synchronized Term log(String agentName,APLIdent var)
-	 {
-	    	_logger.info(agentName + ":" + var.toString());
-	    	return wrapBoolean(true);
-	 }
-	    
-	 /* Test method for waiting */
-	 public synchronized Term wait( String agentName, APLNum time )
-	 {
-	    	try {
-	    		Thread.sleep( time.toInt() );
-	    	} catch( Exception e ) {
-	    		
-	    	}
-	    	return wrapBoolean(true);
-	  }
-	 
-	 public static APLListVar wrapBoolean( boolean b )
-	 {
+	}
+	
+	/* Test method for logging*/
+	public synchronized Term log(String agentName,APLIdent var)
+	{
+		_logger.info(agentName + ":" + var.toString());
+		return wrapBoolean(true);
+	}
+	   
+	/* Test method for waiting */
+	public synchronized Term wait( String agentName, APLNum time )
+	{
+		try {
+			Thread.sleep( time.toInt() );
+		} catch( Exception e ) {		
+		}
+		return wrapBoolean(true);
+	}
+	
+	public static APLListVar wrapBoolean( boolean b )
+	{
 		return new APLList(new APLIdent(b ? "true" : "false"));
-	 }
-	 
-	 public static void main(String[] args)
-	 {
+	}
+	
+	public static void main(String[] args)
+	{
 		new Env();
-	 }
-	 
+	}
 	
-	 public void throwEventToAll(String name)
-	 {
+	public void throwEventToAll(String name)
+	{
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
-		 APLFunction event = new APLFunction(name, new APLIdent("true"));
-		 super.throwEvent(event, _agentNames);
-	 }
+		APLFunction event = new APLFunction(name, new APLIdent("true"));
+		super.throwEvent(event, (String[])_agentNames.toArray());
+	}
+
+	// ---------------------------------------------------------------------------------------
+	// ------------------------- BWAPI Event Listener functions.  ----------------------------
+	// ---------------------------------------------------------------------------------------
 	
-	 
-	 
-	 
-	 
-	 
-	 
-	///BWAPI Event Listener functions. 
 	@Override
 	public void connected() 
 	{
@@ -180,7 +177,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		List<Unit> enemies = new LinkedList<Unit>();
 		enemies.add( _jnibwapi.getUnit(unitID) );
 		
-		for( int i = 0; i < _agentNames.length; i++ )
+		for( int i = 0; i < _agentNames.size(); i++ )
 		{
 			_actions.add( new Attack( _jnibwapi, i, 1, enemies ) );
 		}

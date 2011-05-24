@@ -2,6 +2,8 @@ package eisbot.proxy;
 
 import java.util.HashSet;
 
+import starcraft.JNIAgent;
+
 import eisbot.proxy.model.Unit;
 import eisbot.proxy.types.UnitType.UnitTypes;
 /**
@@ -41,7 +43,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 	 * Instantiates the JNI-BWAPI interface and connects to BWAPI.
 	 */
 	public ExampleAIClient() {
-		bwapi = new JNIBWAPI(this);
+		bwapi = new JNIAgent(this, null);
 		bwapi.start();
 	} 
 
