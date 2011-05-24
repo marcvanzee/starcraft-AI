@@ -1,4 +1,7 @@
-package eisbot.proxy;
+package starcraft.unused;
+
+import eisbot.proxy.BWAPIEventListener;
+
 /**
  * Example of a Java AI Client that does nothing.
  */
@@ -9,7 +12,7 @@ public class MinimalAIClient implements BWAPIEventListener {
 	}
 	
 	public MinimalAIClient() {
-		new JNIBWAPI(this).start();
+		//new JNIBWAPI(this).start();
 	} 
 
 	public void connected() {}	
