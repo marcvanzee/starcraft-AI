@@ -15,7 +15,7 @@ PG-rules:
 
 environmentLoaded <- true |
 {
-	@starcraft(start(),_);
+	@starcraft(hello(),_);
 	adopta(connected);
 	EnvironmentLoaded()
 }
