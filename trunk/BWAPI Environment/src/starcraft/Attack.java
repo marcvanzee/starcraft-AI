@@ -11,8 +11,6 @@ import eisbot.proxy.model.*;
 import eisbot.proxy.types.*;
 
 public class Attack extends Action {
-
-	private ArrayList<String[]> actions;
 	
 	/**
 	 * 
@@ -20,9 +18,9 @@ public class Attack extends Action {
 	 * @param num
 	 * @param enemies
 	 */
-	public Attack(JNIBWAPI bwapi,  int num, List<Unit> enemies )
+	public Attack(JNIBWAPI bwapi, int officer,  int num, List<Unit> enemies )
 	{
-		this(bwapi, num, enemies, true );
+		this(bwapi, officer, num, enemies, true );
 	}
 	
 	/**
@@ -32,9 +30,9 @@ public class Attack extends Action {
 	 * @param enemies
 	 * @param onlyIdle
 	 */
-	public Attack(JNIBWAPI bwapi,  int num, List<Unit> enemies, boolean onlyIdle )
+	public Attack(JNIBWAPI bwapi,  int officer, int num, List<Unit> enemies, boolean onlyIdle )
 	{
-		this( bwapi, num, enemies, new LinkedList<UnitType>(), onlyIdle );
+		this( bwapi, officer, num, enemies, new LinkedList<UnitType>(), onlyIdle );
 	}
 	
 	/**
@@ -45,10 +43,10 @@ public class Attack extends Action {
 	 * @param withType
 	 * @param onlyIdle
 	 */
-	public Attack(JNIBWAPI bwapi, int num, List<Unit> enemies, List<UnitType> withType, boolean onlyIdle )
+	public Attack(JNIBWAPI bwapi, int officer, int num, List<Unit> enemies, List<UnitType> withType, boolean onlyIdle )
 	{
 		List<Unit> usingUnits = new LinkedList<Unit>();
-		for( Unit unit : bwapi.getMyUnits() )
+		for( Unit unit : bwapi.getMyUnits(officer) )
 		{
 			if( onlyIdle && !unit.isIdle() )
 				continue;
@@ -78,27 +76,10 @@ public class Attack extends Action {
 		{
 			for( Unit enemy : enemies )
 			{
-				//actions.add( "bwapi.attackMove( " + unit.getID() + ", " + enemy.getX() + ", " + enemy.getY() + " );" );
-
 				actions.add( new String[] {"attackMove", ""+unit.getID(), ""+enemy.getX(), ""+enemy.getY()} );
 				break;
 			}
 		}
-	}
-
-	@Override
-	public void perform( JNIBWAPI bwapi ) {
-		// TODO Auto-generated method stub
-		
-		for( String[] action : actions )
-		{
-			if( action[0].equals( "attackMove" ) )
-			{
-				bwapi.attackMove( Integer.parseInt( action[1] ), Integer.parseInt(action[2]), Integer.parseInt( action[3] ) );
-			}
-			actions.remove( action );
-		}
-		
 	}
 	
 

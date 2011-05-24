@@ -123,6 +123,9 @@ public class Unit {
 	private boolean upgrading;
 	private boolean visible;
 	
+	// Added by Roemer; keep track of officer assigned to
+	private int officer;
+	
 	public Unit(int ID) {
 		this.ID = ID;
 	}
@@ -688,5 +691,13 @@ public class Unit {
 
 	public boolean isVisible() {
 		return visible;
+	}
+
+	public void setOfficer(int officer) {
+		this.officer = officer;
+	}
+
+	public int getOfficer() {
+		return officer;
 	}
 }

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import eisbot.proxy.model.BaseLocation;
 import eisbot.proxy.model.ChokePoint;
@@ -55,12 +57,19 @@ public class JNIBWAPI {
 	private int gameFrame = 0;
 	private Map map;
 	private HashMap<Integer, Unit> units = new HashMap<Integer, Unit>();
-	private ArrayList<Unit> playerUnits = new ArrayList<Unit>();
+//	private ArrayList<Unit> playerUnits = new ArrayList<Unit>();
+	private ArrayList<ArrayList<Unit>> playerUnits = new ArrayList<ArrayList<Unit>>();
 	private ArrayList<Unit> alliedUnits = new ArrayList<Unit>();
 	private ArrayList<Unit> enemyUnits = new ArrayList<Unit>();
 	private ArrayList<Unit> neutralUnits = new ArrayList<Unit>();
 	
 	// player lists
+	public static int LOC_NE;
+	public static int LOC_NW;
+	public static int LOC_SE;
+	public static int LOC_SW;
+	private HashMap<Integer, Integer> officers = new HashMap<Integer, Integer>();
+	
 	private Player self;
 	private HashSet<Integer> allyIDs = new HashSet<Integer>();
 	private HashSet<Integer> enemyIDs = new HashSet<Integer>();
@@ -226,8 +235,8 @@ public class JNIBWAPI {
 		return units.values();
 	}
 	
-	public ArrayList<Unit> getMyUnits() {
-		return playerUnits;
+	public ArrayList<Unit> getMyUnits( int officer  ) {
+		return playerUnits.get( officer );
 	}
 
 	public ArrayList<Unit> getAlliedUnits() {
@@ -496,8 +505,15 @@ public class JNIBWAPI {
 	 * 
 	 * @param listener - listener for BWAPI callback events.
 	 */
-	public JNIBWAPI(BWAPIEventListener listener) {
+	public JNIBWAPI(BWAPIEventListener listener, int[] officerLocations ) {
 		this.listener = listener;
+
+		// create officers with their location
+		for( int i = 0; i < officerLocations.length; i++ )
+		{
+			this.officers.put(i, officerLocations[ i ] );
+		}
+
 	}
 	
 	/**
@@ -539,6 +555,19 @@ public class JNIBWAPI {
 		}			
 	}
 
+	
+	public int locationOfUnit( int x, int y )
+	{
+		if( x > map.getWidth()/2 && y < map.getHeight() /2 )
+			return LOC_NE;
+		if( x > map.getWidth()/2 && y > map.getHeight() /2 )
+			return LOC_SE;
+		if( x < map.getWidth()/2 && y > map.getHeight() /2 )
+			return LOC_SW;
+		return LOC_NW;
+	}
+	
+	
 	/**
 	 * C++ callback function.
 	 * 
@@ -587,7 +616,21 @@ public class JNIBWAPI {
 				
 				units.put(id, unit);
 				if (unit.getPlayerID() == self.getID()) {
-					playerUnits.add(unit);
+					
+					int location = this.locationOfUnit( unit.getX(), unit.getY() );
+					
+					Iterator<Entry<Integer, Integer>> iter = this.officers.entrySet().iterator();
+					int officer = 0;
+					
+					while( iter.hasNext() )
+					{
+						Entry<Integer, Integer> entry = iter.next();
+						if( entry.getValue().equals(location) )
+							officer = entry.getKey();
+					}
+					
+					unit.setOfficer( officer );
+					playerUnits.get( officer ).add(unit);
 				}
 				else if (allyIDs.contains(unit.getPlayerID())) {
 					alliedUnits.add(unit);
@@ -622,7 +665,8 @@ public class JNIBWAPI {
 			// update units
 			int[] unitData = getUnits();
 			HashSet<Integer> deadUnits = new HashSet<Integer>(units.keySet());		
-			ArrayList<Unit> playerList = new ArrayList<Unit>();
+//			ArrayList<Unit> playerList = new ArrayList<Unit>();
+			ArrayList<ArrayList<Unit>> playerList = new ArrayList<ArrayList<Unit>>();
 			ArrayList<Unit> alliedList = new ArrayList<Unit>();
 			ArrayList<Unit> enemyList = new ArrayList<Unit>();
 			ArrayList<Unit> neutralList = new ArrayList<Unit>();
@@ -639,7 +683,7 @@ public class JNIBWAPI {
 				unit.update(unitData, index);
 				
 				if (unit.getPlayerID() == self.getID()) {
-					playerList.add(unit);
+					playerList.get( unit.getOfficer() ).add(unit);
 				}
 				else if (allyIDs.contains(unit.getPlayerID())) {
 					alliedList.add(unit);

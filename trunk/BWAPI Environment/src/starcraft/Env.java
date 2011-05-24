@@ -44,8 +44,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	  */
 	 private void init()
 	 {
-		 _jnibwapi = new JNIBWAPI(this);
+		 // locations of our officers
+		 int[] locations = {JNIBWAPI.LOC_NE, JNIBWAPI.LOC_NW};
+		 
+		 _jnibwapi = new JNIBWAPI(this, locations );
 		 _clientThread = new Thread(new JNIBWAPIClient(_jnibwapi));
+		 
 	 }
 	 
 	 /**
@@ -175,7 +179,11 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		// For now, just send one unit to enemy
 		List<Unit> enemies = new LinkedList<Unit>();
 		enemies.add( _jnibwapi.getUnit(unitID) );
-		_actions.add( new Attack( _jnibwapi, 1, enemies ) );
+		
+		for( int i = 0; i < _agentNames.length; i++ )
+		{
+			_actions.add( new Attack( _jnibwapi, i, 1, enemies ) );
+		}
 	}
 
 	@Override
