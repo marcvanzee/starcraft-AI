@@ -21,7 +21,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	
 	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	private JNIAgent _jnibwapi;
+	private BWAPICoop _jnibwapi;
 	private Thread _clientThread;
 	
 	//The agent names.
@@ -41,9 +41,9 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	private void init()
 	{
 		// locations of our officers
-		int[] locations = {JNIAgent.LOC_NE, JNIAgent.LOC_NW};
+		int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
 	 
-		_jnibwapi = new JNIAgent(this, locations );
+		_jnibwapi = new BWAPICoop(this, locations );
 		_clientThread = new Thread(new JNIBWAPIClient(_jnibwapi));
 	}
 	
@@ -122,7 +122,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	}
 
 	@Override
-	public void gameUpdate() {
+	public void gameUpdate() 
+	{
 		// TODO Auto-generated method stub
 		
 		
