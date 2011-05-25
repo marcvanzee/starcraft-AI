@@ -10,22 +10,25 @@ import eisbot.proxy.model.Unit;
 public class BWAPICoop extends JNIBWAPI 
 {
 	private ArrayList<ArrayList<Unit>> playerUnits = new ArrayList<ArrayList<Unit>>();
-	
-	// player lists
-	public static int LOC_NE;
-	public static int LOC_NW;
-	public static int LOC_SE;
-	public static int LOC_SW;
-	
 	private HashMap<Integer, Integer> officers = new HashMap<Integer, Integer>();
+	
+	// player listss
+	//Edit Frank: What is this for? i guessed you mean predefined values instead of blanco.
+	public static final int LOC_NE = 0;
+	public static final int LOC_NW = 1;
+	public static final int LOC_SE = 2;
+	public static final int LOC_SW = 3;
+	
 	
 	/**
 	 * Instantiates a BWAPI instance, but does not connect to the bridge. To 
 	 * connect, the start method must be invokeed.
 	 * 
 	 * @param listener - listener for BWAPI callback events.
+	 * 
 	 */
-	public BWAPICoop(BWAPIEventListener listener, int[] officerLocations ) {
+	public BWAPICoop(BWAPIEventListener listener, int[] officerLocations ) 
+	{
 		super(listener);
 
 		// create officers with their location
@@ -35,7 +38,8 @@ public class BWAPICoop extends JNIBWAPI
 		}
 	}
 	
-	public ArrayList<Unit> getMyUnits( int officer  ) {
+	public ArrayList<Unit> getMyUnits( int officer  ) 
+	{
 		return playerUnits.get( officer );
 	}
 }
