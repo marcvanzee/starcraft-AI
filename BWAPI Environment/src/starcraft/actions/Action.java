@@ -1,5 +1,7 @@
 package starcraft.actions;
 
+import starcraft.BWAPICoop;
+
 public abstract class Action 
 {
 	
