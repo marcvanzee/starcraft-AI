@@ -21,7 +21,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	
 	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	private BWAPICoop _jnibwapi;
+	private BWAPICoop _bwapi;
 	private Thread _clientThread;
 	
 	//The agent names.
@@ -43,8 +43,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		// locations of our officers
 		int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
 	 
-		_jnibwapi = new BWAPICoop(this, locations );
-		_clientThread = new Thread(new JNIBWAPIClient(_jnibwapi));
+		_bwapi = new BWAPICoop(this, locations );
+		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 	
 	/**
@@ -129,7 +129,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		for( Action action : _actions )
 		{
-			action.perform( _jnibwapi );
+			action.perform( _bwapi );
 		}
 		
 	}
@@ -171,16 +171,17 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	}
 
 	@Override
-	public void unitDiscover(int unitID) {
+	public void unitDiscover(int unitID) 
+	{
 		// TODO Auto-generated method stub
 		
 		// For now, just send one unit to enemy
 		List<Unit> enemies = new LinkedList<Unit>();
-		enemies.add( _jnibwapi.getUnit(unitID) );
+		enemies.add( _bwapi.getUnit(unitID) );
 		
 		for( int i = 0; i < _agentNames.size(); i++ )
 		{
-			_actions.add( new Attack( _jnibwapi, i, 1, enemies ) );
+			_actions.add( new Attack( _bwapi, i, 1, enemies ) );
 		}
 	}
 
