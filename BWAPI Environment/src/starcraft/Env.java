@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import starcraft.actions.Attack;
+
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.*;
 
