@@ -2,7 +2,8 @@ package starcraft;
 
 import eisbot.proxy.JNIBWAPI;
 
-public class JNIBWAPIClient implements Runnable {
+public class JNIBWAPIClient implements Runnable 
+{
 
 	
 	private JNIBWAPI _jnibwapi;

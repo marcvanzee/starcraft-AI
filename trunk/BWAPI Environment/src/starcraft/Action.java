@@ -9,9 +9,9 @@ public abstract class Action {
 
 	protected ArrayList<String[]> actions;
 	
-	public void perform( JNIBWAPI bwapi ) {
-		// TODO Auto-generated method stub
-		
+	public void perform( JNIBWAPI bwapi ) 
+	{
+				
 		for( String[] action : actions )
 		{
 			if( action[0].equals( "attackMove" ) )

@@ -7,7 +7,8 @@ import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.Unit;
 
-public class JNIAgent extends JNIBWAPI {
+public class BWAPICoop extends JNIBWAPI 
+{
 	private ArrayList<ArrayList<Unit>> playerUnits = new ArrayList<ArrayList<Unit>>();
 	
 	// player lists
@@ -15,6 +16,7 @@ public class JNIAgent extends JNIBWAPI {
 	public static int LOC_NW;
 	public static int LOC_SE;
 	public static int LOC_SW;
+	
 	private HashMap<Integer, Integer> officers = new HashMap<Integer, Integer>();
 	
 	/**
@@ -23,7 +25,7 @@ public class JNIAgent extends JNIBWAPI {
 	 * 
 	 * @param listener - listener for BWAPI callback events.
 	 */
-	public JNIAgent(BWAPIEventListener listener, int[] officerLocations ) {
+	public BWAPICoop(BWAPIEventListener listener, int[] officerLocations ) {
 		super(listener);
 
 		// create officers with their location
