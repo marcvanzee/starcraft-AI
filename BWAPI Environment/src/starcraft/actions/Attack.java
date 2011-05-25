@@ -14,9 +14,9 @@ public class Attack extends Action
 {
 
 	
-	List<Unit> _usingUnits;
-	List<Unit> _targetEnemies;
-	
+	private List<Unit> _usingUnits;
+	private List<Unit> _targetEnemies;
+	private boolean _isPerformedOnce;
 	
 	/**
 	 * 
@@ -88,10 +88,20 @@ public class Attack extends Action
 				break;
 			}
 		}
+		_isPerformedOnce = true;
 	}
 	
 
-	
+	public boolean isFinished(BWAPICoop bwapi)
+	{
+		for(Unit unit : _usingUnits)
+		{
+			if(!bwapi.getUnit(unit.getID()).isIdle())
+				return false;
+		}
+		
+		return true;
+	}
 	
 	
 	
