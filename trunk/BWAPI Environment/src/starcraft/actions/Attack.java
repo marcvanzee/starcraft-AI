@@ -12,8 +12,6 @@ import eisbot.proxy.types.*;
 
 public class Attack extends Action 
 {
-
-	
 	private List<Unit> _usingUnits;
 	private List<Unit> _targetEnemies;
 	private boolean _isPerformedOnce;

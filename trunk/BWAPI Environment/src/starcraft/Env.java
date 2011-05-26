@@ -5,9 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import starcraft.actions.Attack;
-
 import eisbot.proxy.BWAPIEventListener;
+import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
 
 import apapl.data.APLFunction;
@@ -23,14 +22,15 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	
 	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	private BWAPICoop _bwapi;
+	private JNIBWAPI _bwapi;
 	private Thread _clientThread;
-	
-	//The agent names.
-	private ArrayList<String> _agentNames = new ArrayList<String>();
-	
-	// List of desired actions per officer
+		
+	// *** Edit Marc: zullen we officers gewoon agents noemen? dat is denk ik duidelijker *** //
+	// List of desired actions per agent
 	private ArrayList<Action> _actions;
+	
+	// *** Edit Marc: arraylist of agents.  *** //
+	private ArrayList<Agent> _agents = new ArrayList<Agent>();
 	
 	public Env()
 	{
@@ -42,10 +42,14 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	private void init()
 	{
-		// locations of our officers
-		int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
+		// Edit Marc: by declaring the agents with their units in this class, the BWAPICoop class is not needed anymore
+		
+		// locations of our agents
+		//int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
 	 
-		_bwapi = new BWAPICoop(this, locations );
+		//_bwapi = new BWAPICoop(this, locations );
+		
+		_bwapi = new JNIBWAPI(this);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 	
@@ -61,9 +65,9 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	
 	public synchronized Term hello(String agentName) throws Exception
 	{
-		if (_agentNames.size() < TOTAL_AGENTS) {
-			_agentNames.add(agentName);
-			if (_agentNames.size() == TOTAL_AGENTS) {
+		if (_agents.size() < TOTAL_AGENTS) {
+			_agents.add(new Agent(agentName));
+			if (_agents.size() == TOTAL_AGENTS) {
 				start();
 			}
 		} else {
@@ -100,35 +104,63 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		new Env();
 	}
 	
-	public void throwEventToAll(String name)
+	private void throwEventToAll(String name)
 	{
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
 		APLFunction event = new APLFunction(name, new APLIdent("true"));
-		super.throwEvent(event, (String[])_agentNames.toArray());
+		String[] agNames = getAgentNames();
+		super.throwEvent(event, agNames);
 	}
-
-	// ---------------------------------------------------------------------------------------
-	// ------------------------- BWAPI Event Listener functions.  ----------------------------
-	// ---------------------------------------------------------------------------------------
 	
-	@Override
-	public void connected() 
-	{
-		throwEventToAll("connected");
+	private String[] getAgentNames() {
+		String s[] = new String[_agents.size()];
+		for (int i=0; i<_agents.size();i++) {
+			s[i] = _agents.get(i).getName();
+		}
+		
+		return s;
 	}
-
+	
+	/**
+	 * Returns the squadron that the units is positioned in, based on values in Parameters class
+	 * @param unit		The unit under consideration
+	 * @return			The squadron, see Parameters class for exact values
+	 */
+	private int getUnitLocation(Unit unit) {
+		int x = unit.getX();
+		int y = unit.getY();
+		int width = _bwapi.getMap().getWidth();
+		int height= _bwapi.getMap().getHeight();
+		
+		if (x < width/2) {
+			// Marc: we need to check whether y = 0 is bottom or top, but I think it is bottom
+			return (y < height/2) ? Parameters.LOC_SW : Parameters.LOC_NW;
+		} else {
+			return (y < height/2) ? Parameters.LOC_SE : Parameters.LOC_SW;
+		}
+	}
+	
+	/**
+	 * Allocates units to the agents by their location
+	 * Method is called by BWAPICoop when the game starts
+	 */
 	@Override
 	public void gameStarted() 
 	{
+		for (Unit unit : _bwapi.getMyUnits()) {
+			// if units are left top, allocate them to the first agent
+			if (getUnitLocation(unit) == Parameters.LOC_NW) {
+				_agents.get(0).addUnit(unit);
+			} else {
+				_agents.get(1).addUnit(unit);
+			}
+		}
 		throwEventToAll("gameStarted");		
 	}
-
+	
 	@Override
 	public void gameUpdate() 
 	{
-		// TODO Auto-generated method stub
-		
-		
 		for( Action action : _actions )
 		{
 			action.perform( _bwapi );
@@ -142,6 +174,26 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		throwEventToAll("gameEnded");		
 	}
 
+	@Override
+	public void unitDiscover(int unitID) 
+	{		
+		// For now, just send one unit to enemy
+		List<Unit> enemies = new LinkedList<Unit>();
+		enemies.add( _bwapi.getUnit(unitID) );
+		
+		for( int i = 0; i < _agents.size(); i++ )
+		{
+			// *** MARC *** dit geeft een error, en ik snap eigenlijk de "action" opzet nog niet helemaal
+		//	_actions.add( new Attack( _bwapi, i, 1, enemies ) );
+		}
+	}
+	
+	@Override
+	public void connected() 
+	{
+		throwEventToAll("connected");
+	}
+	
 	@Override
 	public void keyPressed(int keyCode) {
 		// TODO Auto-generated method stub
@@ -170,21 +222,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void nukeDetect() {
 		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public void unitDiscover(int unitID) 
-	{
-		// TODO Auto-generated method stub
-		
-		// For now, just send one unit to enemy
-		List<Unit> enemies = new LinkedList<Unit>();
-		enemies.add( _bwapi.getUnit(unitID) );
-		
-		for( int i = 0; i < _agentNames.size(); i++ )
-		{
-			_actions.add( new Attack( _bwapi, i, 1, enemies ) );
-		}
 	}
 
 	@Override
@@ -222,5 +259,4 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		// TODO Auto-generated method stub
 		
 	}
-	 
 }

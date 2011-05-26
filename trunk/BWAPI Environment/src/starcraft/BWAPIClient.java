@@ -1,11 +1,13 @@
 package starcraft;
 
+import eisbot.proxy.JNIBWAPI;
+
 public class BWAPIClient implements Runnable 
 {
-	private BWAPICoop _bwapi;
+	private JNIBWAPI _bwapi;
 	
 	
-	public BWAPIClient(BWAPICoop bwapi)
+	public BWAPIClient(JNIBWAPI bwapi)
 	{
 		_bwapi = bwapi;
 	}
