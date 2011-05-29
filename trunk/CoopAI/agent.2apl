@@ -34,6 +34,7 @@ PC-rules:
 	{
 		adopta(gameStarted);
 		Connected();
+		print(connected);
 		skip
 	}
 	
@@ -41,6 +42,7 @@ PC-rules:
 	{
 		adopta(winGame);
 		GameStarted();
+		print(gamestarted);
 		skip
 	}
 		
