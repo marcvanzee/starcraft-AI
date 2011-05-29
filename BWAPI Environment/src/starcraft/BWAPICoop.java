@@ -29,6 +29,10 @@ public class BWAPICoop extends JNIBWAPI
 	public static final int LOC_NW = 1;
 	public static final int LOC_SE = 2;
 	public static final int LOC_SW = 3;
+	*/
+	
+	
+	
 	
 	/**
 	 * Instantiates a BWAPI instance, but does not connect to the bridge. To 
@@ -37,7 +41,7 @@ public class BWAPICoop extends JNIBWAPI
 	 * @param listener - listener for BWAPI callback events.
 	 * 
 	 */
-	public BWAPICoop(BWAPIEventListener listener, int[] officerLocations ) 
+	public BWAPICoop(BWAPIEventListener listener) 
 	{
 		super(listener);
 

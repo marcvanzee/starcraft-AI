@@ -1,10 +1,10 @@
 package starcraft.actions;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import starcraft.Action;
 import starcraft.BWAPICoop;
 import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
@@ -14,84 +14,87 @@ public class Attack extends Action
 {
 	private List<Unit> _usingUnits;
 	private List<Unit> _targetEnemies;
+	private Point _targetPosition;
 	private boolean _isPerformedOnce;
 	
-	/**
-	 * 
-	 * @param num
-	 * @param enemies
-	 */
-	public Attack(List<Unit> units, int officer,  int num, List<Unit> enemies )
-	{
-		this(units, officer, num, enemies, true );
-	}
 	
-	/**
-	 * 
-	 * @param num
-	 * @param enemies
-	 * @param onlyIdle
-	 */
-	public Attack(List<Unit> units, int officer, int num, List<Unit> enemies, boolean onlyIdle )
-	{
-		this(units, officer, num, enemies, new LinkedList<UnitType>(), onlyIdle );
-	}
 	
-	/**
-	 * 
-	 * @param bwapi
-	 * @param num
-	 * @param enemies
-	 * @param withType
-	 * @param onlyIdle
-	 */
-	public Attack(List<Unit> units, int officer, int num, List<Unit> enemies, List<UnitType> withType, boolean onlyIdle )
+	
+	public Attack(List<Unit> units, int x, int y)
 	{
 		init();
+		_usingUnits.addAll(units);
+		_targetPosition.x = x;
+		_targetPosition.y = y;
+	}
+	
+	public Attack(List<Unit> units, List<Unit> enemies)
+	{
+		init();
+		_usingUnits.addAll(units);
 		_targetEnemies.addAll(enemies);
+	}
+	
+	private void init()
+	{
+		_usingUnits = new ArrayList<Unit>();
+		_targetEnemies = new ArrayList<Unit>();
+		_targetPosition = new Point();
+	}
+	
+	public static List<Unit> selectUnits(List<Unit> units, int amount, List<UnitType> withType, boolean onlyIdle)
+	{
+		
+		List<Unit> selectedUnits = new ArrayList<Unit>();
 		
 		for( Unit unit : units )
 		{
 			if( onlyIdle && !unit.isIdle() )
 				continue;
 			
-			if( withType.size() > 0 && !withType.contains( unit.getTypeID()) )
+			if(withType.size() > 0 && !withType.contains(unit.getTypeID()))
 				continue;
 			
-			_usingUnits.add( unit );
+			selectedUnits.add(unit);
 			
-			if(num > 0 && _usingUnits.size() >= num)
+			if(amount > 0 && selectedUnits.size() >= amount)
 				break;
 		}
 		
-		
-		
-	}
-
-
-	private void init()
-	{
-		_usingUnits = new ArrayList<Unit>();
-		_targetEnemies = new ArrayList<Unit>();
+		return selectedUnits;
 	}
 	
-
+	
 	public void perform(BWAPICoop bwapi)
 	{
+		//The perform action is called each updateCycle.
+		//And is only needed to be given once, hence the _isPerformedOnce.
+		
+		if(!_isPerformedOnce)
 		for( Unit unit : _usingUnits )
 		{
-			for( Unit enemy : _targetEnemies )
+			//If targetEnemies is empty than attack position
+			if(_targetEnemies.isEmpty())
 			{
-				bwapi.attackUnit(unit.getID(), enemy.getID());
-				break;
+				bwapi.attackMove(unit.getID(), _targetPosition.x, _targetPosition.y);
+			}
+			else
+			{
+				for( Unit enemy : _targetEnemies )
+				{
+					bwapi.attackUnit(unit.getID(), enemy.getID());
+					break;
+				}
 			}
 		}
+		
 		_isPerformedOnce = true;
 	}
 	
 
 	public boolean isFinished(BWAPICoop bwapi)
 	{
+		//If every unit is idle, the aciton is finished. Dunno if this is good behaviour.
 		for(Unit unit : _usingUnits)
 		{
 			if(!bwapi.getUnit(unit.getID()).isIdle())
@@ -101,7 +104,15 @@ public class Attack extends Action
 		return true;
 	}
 	
-	
+	public int[] getInvolvedUnitIds()
+	{
+		int[] unitIds = new int[_usingUnits.size()];
+		for(int i=0; i<unitIds.length; i++)
+		{
+			unitIds[i] = _usingUnits.get(i).getID();
+		}
+		return unitIds;
+	}
 	
 	/**
 	 * deprecated
