@@ -10,12 +10,12 @@ import eisbot.proxy.types.*;
 
 public class Attack extends Action 
 {
-	private List<Unit> _usingUnits;
-	private List<Unit> _targetEnemies;
+	private List<Integer> _usingUnits;
+	private List<Integer> _targetEnemies;
 	private Point _targetPosition;
 	private boolean _isPerformedOnce;
 	
-	public Attack(List<Unit> units, int x, int y)
+	public Attack(List<Integer> units, int x, int y)
 	{
 		init();
 		_usingUnits.addAll(units);
@@ -23,7 +23,7 @@ public class Attack extends Action
 		_targetPosition.y = y;
 	}
 	
-	public Attack(List<Unit> units, List<Unit> enemies)
+	public Attack(List<Integer> units, List<Integer> enemies)
 	{
 		init();
 		_usingUnits.addAll(units);
@@ -32,8 +32,8 @@ public class Attack extends Action
 	
 	private void init()
 	{
-		_usingUnits = new ArrayList<Unit>();
-		_targetEnemies = new ArrayList<Unit>();
+		_usingUnits = new ArrayList<Integer>();
+		_targetEnemies = new ArrayList<Integer>();
 		_targetPosition = new Point();
 	}
 	
@@ -74,18 +74,18 @@ public class Attack extends Action
 		//And is only needed to be given once, hence the _isPerformedOnce.
 		
 		if(!_isPerformedOnce)
-		for( Unit unit : _usingUnits )
+		for( int unit : _usingUnits )
 		{
 			//If targetEnemies is empty than attack position
 			if(_targetEnemies.isEmpty())
 			{
-				bwapi.attackMove(unit.getID(), _targetPosition.x, _targetPosition.y);
+				bwapi.attackMove(unit, _targetPosition.x, _targetPosition.y);
 			}
 			else
 			{
-				for( Unit enemy : _targetEnemies )
+				for( int enemy : _targetEnemies )
 				{
-					bwapi.attackUnit(unit.getID(), enemy.getID());
+					bwapi.attackUnit(unit, enemy );
 					break;
 				}
 			}
@@ -98,9 +98,9 @@ public class Attack extends Action
 	public boolean isFinished(BWAPICoop bwapi)
 	{
 		//If every unit is idle, the aciton is finished. Dunno if this is good behaviour.
-		for(Unit unit : _usingUnits)
+		for( int unit : _usingUnits)
 		{
-			if(!bwapi.getUnit(unit.getID()).isIdle())
+			if(!bwapi.getUnit( unit ).isIdle() )
 				return false;
 		}
 		
@@ -112,7 +112,7 @@ public class Attack extends Action
 		int[] unitIds = new int[_usingUnits.size()];
 		for(int i=0; i<unitIds.length; i++)
 		{
-			unitIds[i] = _usingUnits.get(i).getID();
+			unitIds[i] = _usingUnits.get(i);
 		}
 		return unitIds;
 	}

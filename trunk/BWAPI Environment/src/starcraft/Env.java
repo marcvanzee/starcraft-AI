@@ -77,7 +77,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return wrapBoolean(true);
 	}
 	
-	private Agent getAgent( String agentName )
+	/**
+	 * Get the agent object using a String
+	 * @param agentName
+	 * @return
+	 */
+	private synchronized Agent getAgent( String agentName )
 	{
 		for( Agent agent : _agents )
 		{
@@ -87,7 +92,30 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		return null;
 	}
-
+	
+	/**
+	 * Get the agent of a specific unit
+	 * @param unit
+	 * @return
+	 */
+	private Agent getAgent( Integer unit )
+	{
+		for( Agent agent : _agents )
+		{
+			_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
+			
+			if( agent.getUnits().contains( unit ) )
+			{
+				_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
+				return agent;
+			}
+		}
+		
+		_logger.info( "No agent found for " + unit );
+		return null;
+	}
+	
+	
 	/**
 	 * Select num random units
 	 * @param agentName
@@ -168,12 +196,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	{
 		LinkedList<Term> list = new LinkedList<Term>();
 		
-		for (int unit : getAgent(agentName).getUnits()) {
-			Unit u = _bwapi.getUnit(unit);
-			Point p2 = new Point(u.getX(), u.getY());
-			
-			if (position.distance(p2) <= radius) 
-				list.add(new APLNum(unit));
+		LinkedList<Term> result = new LinkedList<Term>();
+		
+		Agent agent = this.getAgent( agentName );
+		
+		for( int unitID : agent.getUnits() )
+		{
+			result.add( new APLNum( unitID ) );
 		}
 		
 		return new APLList(list);
@@ -187,7 +216,43 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectAll( String agentName ) throws Exception
 	{
-		return new APLList(intListToAPLList(getAgent(agentName).getUnits()));
+//		Unit enemy = new Unit( enemyID.toInt() );		
+//		LinkedList<Integer> enemies = new LinkedList<Integer>();
+//		enemies.add( enemy.getID() );
+//				
+//		String[] IDs = unwrapStringArray( unitIDs );
+//		LinkedList<Integer> IDsAsInt = new LinkedList<Integer>();
+//		PlanBase planbase = _planBases.get( agentName );
+//		LinkedList<Unit> units = new LinkedList<Unit>();
+//	
+//		for( String id : IDs  )
+//		{
+////			Unit unit = new Unit( Integer.parseInt( id ) );
+////			units.add( unit );
+//			IDsAsInt.add( Integer.parseInt( id ) );
+//		}
+//		
+//		planbase.insertFirst( new Attack(IDsAsInt, enemies) );
+//		return wrapBoolean(true);
+		List<Integer> list = new ArrayList<Integer>();
+		
+		list = getAgent(agentName).getUnits();
+		
+		return intListToAPLList(list);
+	}
+	
+	
+	
+	public static String[] unwrapStringArray(APLList list)
+	{
+		String[] array = new String[list.toLinkedList().size()];
+		int i=0;
+		for(Term t : list.toLinkedList())
+		{
+			array[i] = t.toString();
+			i++;
+		}
+		return array;
 	}
 	
 	
@@ -244,6 +309,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		super.throwEvent(event, agNames);
 	}
 	
+	private void throwEventToAll( APLFunction event )
+    {
+            String[] agNames = getAgentNames();
+            super.throwEvent(event, agNames);
+    }
+
+	
 	private String[] getAgentNames() {
 		String s[] = new String[_agents.size()];
 		for (int i=0; i<_agents.size();i++) {
@@ -254,14 +326,44 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	}
 	
 	/**
+	 * Select an enemyID unit with own unitIDs
+	 * @param agentName
+	 * @param unitIDs
+	 * @param enemyID
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term attackUnit( String agentName, APLList unitIDs, APLNum enemyID ) throws Exception
+	{
+		Unit enemy = new Unit( enemyID.toInt() );		
+		LinkedList<Integer> enemies = new LinkedList<Integer>();
+		enemies.add( enemy.getID() );
+				
+		String[] IDs = unwrapStringArray( unitIDs );
+		LinkedList<Integer> IDsAsInt = new LinkedList<Integer>();
+		PlanBase planbase = _planBases.get( agentName );
+//		LinkedList<Unit> units = new LinkedList<Unit>();
+	
+		for( String id : IDs  )
+		{
+//			Unit unit = new Unit( Integer.parseInt( id ) );
+//			units.add( unit );
+			IDsAsInt.add( Integer.parseInt( id ) );
+		}
+		
+		planbase.insertFirst( new Attack(IDsAsInt, enemies) );
+		return wrapBoolean(true);
+	}
+	
+	/**
 	 * Returns the squadron that the units is positioned in, based on values in Parameters class
 	 * @param unit		The unit under consideration
 	 * @return			The squadron, see Parameters class for exact values
 	 */
 	private int getUnitLocation(Unit unit)
 	{
-		int x = unit.getX();
-		int y = unit.getY();
+		int x = unit.getTileX();
+		int y = unit.getTileY();
 		int width = Grid.WIDTH;
 		int height = Grid.HEIGHT;
 		_logger.info("before _bwapi.getMap)");
@@ -270,8 +372,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		//See info of method getMap(), returns null if loadMapData hasnt been called!
 		if(_bwapi.getMap() != null)
 		{	
-			width = _bwapi.getMap().getWidth();
-			height= _bwapi.getMap().getHeight();
+			width = _bwapi.getMap().getWalkWidth();
+			height= _bwapi.getMap().getWalkHeight();
 			
 		}
 		else
@@ -309,11 +411,11 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 			// if units are left top, allocate them to the first agent
 			if (getUnitLocation(unit) == Grid.LOC_NW) 
 			{
-				_agents.get(0).addUnit(unit);
+				_agents.get(0).addUnit(unit.getID());
 			} 
 			else 
 			{
-				_agents.get(1).addUnit(unit);
+				_agents.get(1).addUnit(unit.getID());
 			}
 		}
 		
@@ -330,8 +432,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		_logger.info("Plan Bases setup");
 		
-		throwEventToAll("gameStarted");		
-		_logger.info("even throwed");
+		throwEventToAll("gameStarted");
 	}
 	
 	@Override
@@ -352,7 +453,9 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	@Override
 	public void unitDiscover(int unitID) 
 	{	
-		
+		APLFunction event = new APLFunction("enemyUnitDiscovered", new APLNum(unitID));
+        throwEventToAll( event );
+
 		/*
 	
 		List<Unit> enemies = new LinkedList<Unit>();
@@ -430,6 +533,18 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void unitDestroy(int unitID) {
 		// TODO Auto-generated method stub
 		
+		
+		
+//		Unit unit = new Unit( unitID );
+		Agent agent = this.getAgent( unitID );
+		_logger.info( "unitDestroy " + unitID + " agent of unit: " + agent.getName() );
+		
+		APLFunction event = new APLFunction( "ownUnitDestroyed", new APLNum( agent.getUnits().size() ) );
+		
+		_logger.info( event.toString() );
+		
+		super.throwEvent(event, agent.getName() );
+//		throwEventToAll( event );
 	}
 
 	@Override
