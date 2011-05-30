@@ -45,6 +45,15 @@ PC-rules:
 		print(gamestarted);
 		skip
 	}
+	
+	event(enemyUnitDiscovered(EnemyId), starcraft ) <- true |
+	{
+		@starcraft( selectAll(), ListOfUnits );
+		B( ListOfUnits = [actionresult( Units )] );
+		@starcraft( attackUnit( Units, EnemyId ), _ );
+		
+		skip
+	}
 		
 	event( X, _) <- true |
 	{
@@ -52,13 +61,6 @@ PC-rules:
 	}
 	
 	
-	event(enemyUnitDiscovered( UnitId ), starcraft ) <- true |
-	{
-		@starcraft( selectAll(), Result );
-		
-		// TODO: make a list of this
-		
-		@starcraft( attackUnit( ListOfUnits ), _ );
-	}
+	
 	
 	
