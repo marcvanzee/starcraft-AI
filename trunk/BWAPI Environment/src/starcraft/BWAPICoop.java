@@ -1,9 +1,3 @@
-
-
-//
-//
-// 
-
 package starcraft;
 
 import java.util.ArrayList;

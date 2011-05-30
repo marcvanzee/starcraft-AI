@@ -9,9 +9,9 @@ import java.util.logging.Logger;
 
 import starcraft.actions.Attack;
 import starcraft.actions.PlanBase;
+import starcraft.parameters.Grid;
 
 import eisbot.proxy.BWAPIEventListener;
-import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
 
 import apapl.data.APLFunction;
@@ -35,7 +35,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	// *** Edit: Frank AgentName => PlanBase  mapping *** //
 	private HashMap<String,PlanBase> _planBases;
 	
-	
 	public Env()
 	{
 		init();
@@ -56,7 +55,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		_bwapi = new BWAPICoop(this);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
-		
 	}
 	
 	/**
@@ -68,7 +66,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 			_clientThread.start();
 	}
 		 
-	
 	public synchronized Term hello(String agentName) throws Exception
 	{
 		if (_agents.size() < TOTAL_AGENTS) {
@@ -83,8 +80,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return wrapBoolean(true);
 	}
 	
-	
-	private synchronized Agent getAgent( String agentName )
+	private Agent getAgent( String agentName )
 	{
 		for( Agent agent : _agents )
 		{
@@ -94,8 +90,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		return null;
 	}
-	
-	
+
 	/**
 	 * Select num random units
 	 * @param agentName
@@ -103,22 +98,11 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectRandom( String agentName, int num ) throws Exception
+	public synchronized Term selectUnits( String agentName, int num ) throws Exception
 	{
-		return wrapBoolean( false );
-	}
-	
-	/**
-	 * Select num units closest to position
-	 * @param agentName
-	 * @param position
-	 * @param num
-	 * @return
-	 * @throws Exception
-	 */
-	public synchronized Term selectClosestRandom( String agentName, Point position, int num ) throws Exception
-	{
-		return wrapBoolean( false );
+		List<Integer> unitIds = getAgent(agentName).getUnitIds(num);
+		
+		return intListToAPLList(unitIds);
 	}
 	
 	/**
@@ -130,7 +114,19 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectIdle( String agentName, int num ) throws Exception
 	{
-		return wrapBoolean( false );
+		List<Integer> unitIds = getAgent(agentName).getIdleUnitIds(num);
+
+		return intListToAPLList(unitIds);
+	}
+	
+	public APLList intListToAPLList(List<Integer> unitIds) {
+		LinkedList<Term> aplIds = new LinkedList<Term>();
+		
+		for (Integer id : unitIds) {
+			aplIds.add(new APLNum(id));
+		}
+		
+		return new APLList(aplIds);
 	}
 	
 	/**
@@ -140,9 +136,16 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectIdle( String agentName, List<Unit> units ) throws Exception
+	public synchronized Term selectIdle( String agentName, APLList units ) throws Exception
 	{
-		return wrapBoolean( false );
+		LinkedList<Term> list = units.toLinkedList();
+
+		for (Term unit : list) {
+			if (!_bwapi.getUnit(((APLNum)unit).toInt()).isIdle())
+				list.remove(unit);
+		}
+		
+		return new APLList(list);
 	}
 	
 	/**
@@ -153,8 +156,15 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectRange( String agentName, Point position, int distance ) throws Exception
+	public synchronized Term selectRange( String agentName, Point position, int radius ) throws Exception
 	{
+		LinkedList<Term> list = new LinkedList<Term>();
+		
+		for (Unit unit : getAgent(agentName).getUnits()) {
+			if (distance(position, new Point(unit.getX(), unit.getY())) <= radius) 
+				list.add(new APLNum(unit.getID()));
+		}
+		
 		return wrapBoolean( false );
 	}
 	
@@ -166,61 +176,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectAll( String agentName ) throws Exception
 	{
-		
-		LinkedList<Term> result = new LinkedList<Term>();
-		
-		Agent agent = this.getAgent( agentName );
-		
-		for( Unit unit : agent.getUnits() )
-		{
-			result.add( new APLNum( unit.getID() ) );
-		}
-		
-		APLList list = new APLList( result );		
-		return list;
-	}
-	
-	/**
-	 * Select an enemyID unit with own unitIDs
-	 * @param agentName
-	 * @param unitIDs
-	 * @param enemyID
-	 * @return
-	 * @throws Exception
-	 */
-	public synchronized Term attackUnit( String agentName, APLList unitIDs, APLNum enemyID ) throws Exception
-	{
-		Unit enemy = new Unit( enemyID.toInt() );		
-		LinkedList<Unit> enemies = new LinkedList<Unit>();
-		enemies.add( enemy );
-				
-		String[] IDs = unwrapStringArray( unitIDs );
-		
-		PlanBase planbase = _planBases.get( agentName );
-		LinkedList<Unit> units = new LinkedList<Unit>();
-	
-		for( String id : IDs  )
-		{
-			Unit unit = new Unit( Integer.parseInt( id ) );
-			units.add( unit );
-		}
-		
-		planbase.insertFirst( new Attack(units, enemies) );
-		return wrapBoolean(true);
-	}
-	
-	
-	
-	public static String[] unwrapStringArray(APLList list)
-	{
-		String[] array = new String[list.toLinkedList().size()];
-		int i=0;
-		for(Term t : list.toLinkedList())
-		{
-			array[i] = t.toString();
-			i++;
-		}
-		return array;
+		return wrapBoolean( false );
 	}
 	
 	
@@ -277,12 +233,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		super.throwEvent(event, agNames);
 	}
 	
-	private void throwEventToAll( APLFunction event )
-	{
-		String[] agNames = getAgentNames();
-		super.throwEvent(event, agNames);
-	}
-	
 	private String[] getAgentNames() {
 		String s[] = new String[_agents.size()];
 		for (int i=0; i<_agents.size();i++) {
@@ -322,9 +272,9 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		if (x < width/2) 
 		{
 			// Marc: we need to check whether y = 0 is bottom or top, but I think it is bottom
-			return (y < height/2) ? Parameters.LOC_SW : Parameters.LOC_NW;
+			return (y < height/2) ? Grid.LOC_SW : Grid.LOC_NW;
 		} else {
-			return (y < height/2) ? Parameters.LOC_SE : Parameters.LOC_SW;
+			return (y < height/2) ? Grid.LOC_SE : Grid.LOC_SW;
 		}
 	}
 	
@@ -336,18 +286,17 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void gameStarted() 
 	{
 		_bwapi.enableUserInput();
-		_logger.info("Begin of game Started");
+		_logger.info("Game Started");
 		
 		//Loads the map, use false else starcraft might freeze.
 		_bwapi.loadMapData(false);
 	
-		
 		for (Unit unit : _bwapi.getMyUnits()) 
 		{
 			_logger.info("In loop");
 			
 			// if units are left top, allocate them to the first agent
-			if (getUnitLocation(unit) == Parameters.LOC_NW) 
+			if (getUnitLocation(unit) == Grid.LOC_NW) 
 			{
 				_agents.get(0).addUnit(unit);
 			} 
@@ -392,8 +341,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	@Override
 	public void unitDiscover(int unitID) 
 	{	
-		APLFunction event = new APLFunction("enemyUnitDiscovered", new APLNum(unitID));
-		throwEventToAll( event );
 		
 		/*
 	

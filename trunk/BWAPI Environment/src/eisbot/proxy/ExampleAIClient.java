@@ -2,8 +2,6 @@ package eisbot.proxy;
 
 import java.util.HashSet;
 
-import starcraft.BWAPICoop;
-
 import eisbot.proxy.model.Unit;
 import eisbot.proxy.types.UnitType.UnitTypes;
 /**
@@ -89,7 +87,7 @@ public class ExampleAIClient implements BWAPIEventListener {
 				}
 			}
 		}
-				
+		
 		// collect minerals
 		for (Unit unit : bwapi.getMyUnits()) {
 			if (unit.getTypeID() == UnitTypes.Zerg_Drone.ordinal()) {

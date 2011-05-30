@@ -9,7 +9,6 @@ import java.util.Set;
 
 public class MinimalPlanBase 
 {
-
 	private List<HashMap<Integer,Integer>> _planBase;
 	private Set<Integer> _units;
 	
