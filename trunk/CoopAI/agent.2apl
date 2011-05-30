@@ -54,6 +54,13 @@ PC-rules:
 		
 		skip
 	}
+	
+	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
+	{
+		print(ownUnitDestroyed(UnitsLeft));
+		
+		skip
+	}
 		
 	event( X, _) <- true |
 	{
