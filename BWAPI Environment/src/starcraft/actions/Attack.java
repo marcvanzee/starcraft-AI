@@ -2,11 +2,9 @@ package starcraft.actions;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import starcraft.BWAPICoop;
-import eisbot.proxy.JNIBWAPI;
 import eisbot.proxy.model.*;
 import eisbot.proxy.types.*;
 
@@ -16,9 +14,6 @@ public class Attack extends Action
 	private List<Unit> _targetEnemies;
 	private Point _targetPosition;
 	private boolean _isPerformedOnce;
-	
-	
-	
 	
 	public Attack(List<Unit> units, int x, int y)
 	{

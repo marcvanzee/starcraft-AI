@@ -2,6 +2,7 @@ package starcraft;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +28,40 @@ public class Agent
 	public List<Unit> getUnits() 
 	{
 		List<Unit> units = new ArrayList<Unit>(_units);
+		return units;
+	}
+	
+	public List<Integer> getUnitIds(int numUnits) 
+	{
+		List<Integer> units = new ArrayList<Integer>();
+		Iterator<Unit> itr = _units.iterator();
+	
+	    while(itr.hasNext()) {
+	    	if (units.size() < numUnits) {
+	    		units.add(itr.next().getID());
+	    	} else {
+	    		break;
+	    	}
+	    }
+	    
+		return units;
+	}
+	
+	public List<Integer> getIdleUnitIds(int numUnits) 
+	{
+		List<Integer> units = new ArrayList<Integer>();
+		Iterator<Unit> itr = _units.iterator();
+	
+	    while(itr.hasNext()) {
+	    	Unit u = itr.next();
+	    	if (units.size() < numUnits) {
+	    		if (u.isIdle())
+	    			units.add(itr.next().getID());
+	    	} else {
+	    		break;
+	    	}
+	    }
+	    
 		return units;
 	}
 }

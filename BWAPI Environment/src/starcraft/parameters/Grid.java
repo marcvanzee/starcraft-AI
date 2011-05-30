@@ -1,6 +1,6 @@
-package starcraft;
+package starcraft.parameters;
 
-public class Parameters {
+public class Grid {
 	public static final int LOC_NE = 0;
 	public static final int LOC_NW = 1;
 	public static final int LOC_SE = 2;

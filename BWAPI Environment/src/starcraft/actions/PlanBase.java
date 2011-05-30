@@ -1,11 +1,10 @@
 package starcraft.actions;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 
 import starcraft.BWAPICoop;
 
@@ -18,14 +17,12 @@ import eisbot.proxy.model.Unit;
  */
 public class PlanBase 
 {
-	
 	MinimalPlanBase _minimalPlanBase;
 	
 	//A hashmap of actions, indexed by their id.
 	private HashMap<Integer,Action> _actionsPerID;
 	
 	private int _currentActionId;
-	
 	
 	/**
 	 * Constructs a new PlanBase, with empty plans for initial units. 
