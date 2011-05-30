@@ -56,6 +56,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		_bwapi = new BWAPICoop(this);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
+		
 	}
 	
 	/**
@@ -165,7 +166,61 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectAll( String agentName ) throws Exception
 	{
-		return wrapBoolean( false );
+		
+		LinkedList<Term> result = new LinkedList<Term>();
+		
+		Agent agent = this.getAgent( agentName );
+		
+		for( Unit unit : agent.getUnits() )
+		{
+			result.add( new APLNum( unit.getID() ) );
+		}
+		
+		APLList list = new APLList( result );		
+		return list;
+	}
+	
+	/**
+	 * Select an enemyID unit with own unitIDs
+	 * @param agentName
+	 * @param unitIDs
+	 * @param enemyID
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term attackUnit( String agentName, APLList unitIDs, APLNum enemyID ) throws Exception
+	{
+		Unit enemy = new Unit( enemyID.toInt() );		
+		LinkedList<Unit> enemies = new LinkedList<Unit>();
+		enemies.add( enemy );
+				
+		String[] IDs = unwrapStringArray( unitIDs );
+		
+		PlanBase planbase = _planBases.get( agentName );
+		LinkedList<Unit> units = new LinkedList<Unit>();
+	
+		for( String id : IDs  )
+		{
+			Unit unit = new Unit( Integer.parseInt( id ) );
+			units.add( unit );
+		}
+		
+		planbase.insertFirst( new Attack(units, enemies) );
+		return wrapBoolean(true);
+	}
+	
+	
+	
+	public static String[] unwrapStringArray(APLList list)
+	{
+		String[] array = new String[list.toLinkedList().size()];
+		int i=0;
+		for(Term t : list.toLinkedList())
+		{
+			array[i] = t.toString();
+			i++;
+		}
+		return array;
 	}
 	
 	
@@ -222,6 +277,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		super.throwEvent(event, agNames);
 	}
 	
+	private void throwEventToAll( APLFunction event )
+	{
+		String[] agNames = getAgentNames();
+		super.throwEvent(event, agNames);
+	}
+	
 	private String[] getAgentNames() {
 		String s[] = new String[_agents.size()];
 		for (int i=0; i<_agents.size();i++) {
@@ -274,6 +335,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	@Override
 	public void gameStarted() 
 	{
+		_bwapi.enableUserInput();
 		_logger.info("Begin of game Started");
 		
 		//Loads the map, use false else starcraft might freeze.
@@ -330,6 +392,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	@Override
 	public void unitDiscover(int unitID) 
 	{	
+		APLFunction event = new APLFunction("enemyUnitDiscovered", new APLNum(unitID));
+		throwEventToAll( event );
 		
 		/*
 	
