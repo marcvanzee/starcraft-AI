@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import starcraft.actions.Attack;
 import starcraft.actions.PlanBase;
+import starcraft.math.Geometry;
 import starcraft.parameters.Grid;
 
 import eisbot.proxy.BWAPIEventListener;
@@ -100,7 +101,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectUnits( String agentName, int num ) throws Exception
 	{
-		List<Integer> unitIds = getAgent(agentName).getUnitIds(num);
+		List<Integer> unitIds = getAgent(agentName).getUnits(num);
 		
 		return intListToAPLList(unitIds);
 	}
@@ -114,7 +115,18 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectIdle( String agentName, int num ) throws Exception
 	{
-		List<Integer> unitIds = getAgent(agentName).getIdleUnitIds(num);
+		// receive all units, then filter out the non-idle ones and finally limit number
+		// of units to <num>
+		List<Integer> unitIds = getAgent(agentName).getUnits();
+		
+		// filter out non-idle units
+		for (int unit : unitIds) {
+			if (!_bwapi.getUnit(unit).isIdle())
+				unitIds.remove(unit);
+		}
+		
+		// limit number to <num>
+		unitIds = unitIds.subList(0, (num>unitIds.size())?unitIds.size():num);
 
 		return intListToAPLList(unitIds);
 	}
@@ -160,12 +172,15 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	{
 		LinkedList<Term> list = new LinkedList<Term>();
 		
-		for (Unit unit : getAgent(agentName).getUnits()) {
-			if (distance(position, new Point(unit.getX(), unit.getY())) <= radius) 
-				list.add(new APLNum(unit.getID()));
+		for (int unit : getAgent(agentName).getUnits()) {
+			Unit u = _bwapi.getUnit(unit);
+			Point p2 = new Point(u.getX(), u.getY());
+			
+			if (Geometry.distance(position, p2) <= radius) 
+				list.add(new APLNum(unit));
 		}
 		
-		return wrapBoolean( false );
+		return new APLList(list);
 	}
 	
 	/**
@@ -176,7 +191,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectAll( String agentName ) throws Exception
 	{
-		return wrapBoolean( false );
+		return new APLList(getAgent(agentName).getUnits());
 	}
 	
 	
@@ -251,8 +266,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	{
 		int x = unit.getX();
 		int y = unit.getY();
-		int width = 96;
-		int height = 96;
+		int width = Grid.WIDTH;
+		int height = Grid.HEIGHT;
 		_logger.info("before _bwapi.getMap)");
 		
 		
