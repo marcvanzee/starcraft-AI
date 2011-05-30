@@ -42,6 +42,14 @@ public class Attack extends Action
 		_targetPosition = new Point();
 	}
 	
+	/**
+	 * 
+	 * @param units
+	 * @param amount
+	 * @param withType
+	 * @param onlyIdle
+	 * @return
+	 */
 	public static List<Unit> selectUnits(List<Unit> units, int amount, List<UnitType> withType, boolean onlyIdle)
 	{
 		

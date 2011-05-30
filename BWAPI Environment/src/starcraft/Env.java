@@ -1,5 +1,6 @@
 package starcraft;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -80,6 +81,111 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		
 		return wrapBoolean(true);
 	}
+	
+	
+	private synchronized Agent getAgent( String agentName )
+	{
+		for( Agent agent : _agents )
+		{
+			if( agent.getName().equals( agentName ) )
+				return agent;
+		}
+		
+		return null;
+	}
+	
+	
+	/**
+	 * Select num random units
+	 * @param agentName
+	 * @param num
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectRandom( String agentName, int num ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	/**
+	 * Select num units closest to position
+	 * @param agentName
+	 * @param position
+	 * @param num
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectClosestRandom( String agentName, Point position, int num ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	/**
+	 * Select num of idle units
+	 * @param agentName
+	 * @param num
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectIdle( String agentName, int num ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	/**
+	 * Select idle units from a given list
+	 * @param agentName
+	 * @param units
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectIdle( String agentName, List<Unit> units ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	/**
+	 * Select all the units within a range (position as centerpoint)
+	 * @param agentName
+	 * @param position
+	 * @param distance
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectRange( String agentName, Point position, int distance ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	/**
+	 * Select all the units of this agent
+	 * @param agentName
+	 * @return
+	 * @throws Exception
+	 */
+	public synchronized Term selectAll( String agentName ) throws Exception
+	{
+		return wrapBoolean( false );
+	}
+	
+	
+//	/**
+//	 * Select all the units currently under attack
+//	 * @param agentName
+//	 * @return
+//	 * @throws Exception
+//	 */
+//	public synchronized Term selectUnderAttack( String agentName ) throws Exception
+//	{
+//		Agent agent = this.getAgent( agentName );
+//		
+//		for( Unit unit : agent.getUnits() )
+//		{
+//			
+//		}
+//		
+//		return wrapBoolean( false );
+//	}
 	
 	/* Test method for logging*/
 	public synchronized Term log(String agentName,APLIdent var)
@@ -224,6 +330,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	@Override
 	public void unitDiscover(int unitID) 
 	{	
+		
 		/*
 	
 		List<Unit> enemies = new LinkedList<Unit>();
