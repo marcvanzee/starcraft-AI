@@ -2,22 +2,20 @@ package starcraft;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
-
-import eisbot.proxy.model.Unit;
 
 public class Agent 
 {
 	private String _agName;
-	private Set<Unit> _units = new HashSet<Unit>();
+	private Set<Integer> _units = new HashSet<Integer>();
 	
 	public Agent(String agName) {
 		this._agName = agName;
 	}
 	
-	public void addUnit(Unit unit) {
+	public void addUnit(int unit) {
 		_units.add(unit);
 	}
 	
@@ -25,43 +23,21 @@ public class Agent
 		return _agName;
 	}
 	
-	public List<Unit> getUnits() 
+	public List<Integer> getUnits() 
 	{
-		List<Unit> units = new ArrayList<Unit>(_units);
-		return units;
+		return new ArrayList<Integer>(_units);
 	}
 	
-	public List<Integer> getUnitIds(int numUnits) 
+	public List<Integer> getUnits(int numUnits) 
 	{
-		List<Integer> units = new ArrayList<Integer>();
-		Iterator<Unit> itr = _units.iterator();
-	
-	    while(itr.hasNext()) {
-	    	if (units.size() < numUnits) {
-	    		units.add(itr.next().getID());
-	    	} else {
-	    		break;
-	    	}
-	    }
-	    
-		return units;
+		return new ArrayList<Integer>(_units).subList(0, numUnits);
 	}
 	
-	public List<Integer> getIdleUnitIds(int numUnits) 
-	{
-		List<Integer> units = new ArrayList<Integer>();
-		Iterator<Unit> itr = _units.iterator();
-	
-	    while(itr.hasNext()) {
-	    	Unit u = itr.next();
-	    	if (units.size() < numUnits) {
-	    		if (u.isIdle())
-	    			units.add(itr.next().getID());
-	    	} else {
-	    		break;
-	    	}
-	    }
-	    
-		return units;
+	/**
+	 * Returns a random unit
+	 * @return
+	 */
+	public int getRandomUnit() {
+		return (Integer) (_units.toArray())[new Random().nextInt(_units.size())];
 	}
 }
