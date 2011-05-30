@@ -24,16 +24,26 @@ public class PlanBase
 	
 	private int _currentActionId;
 	
-	/**
-	 * Constructs a new PlanBase, with empty plans for initial units. 
-	 * @param initialUnits
-	 */
-	public PlanBase(List<Unit> initialUnits)
+//	/**
+//	 * Constructs a new PlanBase, with empty plans for initial units. 
+//	 * @param initialUnits
+//	 */
+//	public PlanBase(List<Unit> initialUnits)
+//	{
+//		int[] unitIds = new int[initialUnits.size()];
+//		for(int i=0; i<unitIds.length; i++)
+//		{
+//			unitIds[i] = initialUnits.get(i).getID();
+//		}
+//		init(unitIds);
+//	}
+	
+	public PlanBase(List<Integer> initialUnitIDs )
 	{
-		int[] unitIds = new int[initialUnits.size()];
+		int[] unitIds = new int[initialUnitIDs.size()];
 		for(int i=0; i<unitIds.length; i++)
 		{
-			unitIds[i] = initialUnits.get(i).getID();
+			unitIds[i] = initialUnitIDs.get(i);
 		}
 		init(unitIds);
 	}

@@ -83,7 +83,7 @@ public class Environment implements EnvironmentInterfaceStandard {
      *        no agents are listed, the event will be thrown to all agents.
      */
     protected final void throwEvent(APLFunction e, String... receivers) {
-        
+
         String[] receivingEntities;
        
         if (receivers.length == 0) {
