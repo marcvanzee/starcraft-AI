@@ -52,3 +52,13 @@ PC-rules:
 	}
 	
 	
+	event(enemyUnitDiscovered( UnitId ), starcraft ) <- true |
+	{
+		@starcraft( selectAll(), Result );
+		
+		// TODO: make a list of this
+		
+		@starcraft( attackUnit( ListOfUnits ), _ );
+	}
+	
+	
