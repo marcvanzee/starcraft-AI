@@ -6,15 +6,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
-
 import starcraft.actions.Attack;
 import starcraft.actions.PlanBase;
-import starcraft.math.Geometry;
 import starcraft.parameters.Grid;
-
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.*;
-
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
 import apapl.data.APLList;
@@ -176,7 +172,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 			Unit u = _bwapi.getUnit(unit);
 			Point p2 = new Point(u.getX(), u.getY());
 			
-			if (Geometry.distance(position, p2) <= radius) 
+			if (position.distance(p2) <= radius) 
 				list.add(new APLNum(unit));
 		}
 		
@@ -191,7 +187,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 */
 	public synchronized Term selectAll( String agentName ) throws Exception
 	{
-		return new APLList(getAgent(agentName).getUnits());
+		return new APLList(intListToAPLList(getAgent(agentName).getUnits()));
 	}
 	
 	
