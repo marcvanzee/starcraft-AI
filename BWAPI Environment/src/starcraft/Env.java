@@ -57,7 +57,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		_logger.info("Environment Initialised..");
 	}
 	
-	// ------------------------------------------ PRIVATE METHODS ----------------------------
+	// ------------------------------------------ PRIVATE/PROTECTED METHODS ----------------------------
 	
 	/**
 	 * Initializes the environment.
@@ -86,7 +86,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @param agentName
 	 * @return
 	 */
-	private Agent getAgent( String agentName )
+	protected Agent getAgent( String agentName )
 	{
 		for( Agent agent : _agents )
 		{
@@ -102,7 +102,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @param unit
 	 * @return
 	 */
-	private Agent getAgent( Integer unit )
+	protected Agent getAgent( Integer unit )
 	{
 		for( Agent agent : _agents )
 		{
@@ -119,7 +119,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return null;
 	}
 	
-	private void distributeUnits() {
+	protected void distributeUnits() {
 		for (Unit unit : _bwapi.getMyUnits()) 
 		{
 			_logger.info("In loop");
@@ -143,7 +143,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @param unit		The unit under consideration
 	 * @return			The squadron, see Parameters class for exact values
 	 */
-	private int getUnitLocation(Unit unit)
+	protected int getUnitLocation(Unit unit)
 	{
 		int x = unit.getTileX();
 		int y = unit.getTileY();
@@ -174,7 +174,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		}
 	}
 	
-	private void throwEventToAll(String name)
+	protected void throwEventToAll(String name)
 	{
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
 		APLFunction event = new APLFunction(name, new APLIdent("true"));
@@ -182,13 +182,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		super.throwEvent(event, agNames);
 	}
 	
-	private void throwEventToAll( APLFunction event )
+	protected void throwEventToAll( APLFunction event )
     {
             String[] agNames = getAgentNames();
             super.throwEvent(event, agNames);
     }
 	
-	private String[] getAgentNames() 
+	protected String[] getAgentNames() 
 	{
 		String s[] = new String[_agents.size()];
 		for (int i=0; i<_agents.size();i++) {
