@@ -46,11 +46,11 @@ public class MinimalPlanBase
 			}
 		}
 		
-		System.out.println("beforeShift");
-		System.out.println(this);
+		//System.out.println("beforeShift");
+		//System.out.println(this);
 		shift(0);
-		System.out.println("afterShift");
-		System.out.println(this);
+		//System.out.println("afterShift");
+		//System.out.println(this);
 	}
 	
 	/**
@@ -79,11 +79,11 @@ public class MinimalPlanBase
 			}
 			firstMap = false;
 		}
-		System.out.println("beforeShift");
-		System.out.println(this);
+		//System.out.println("beforeShift");
+		//System.out.println(this);
 		shift(0);
-		System.out.println("afterShift");
-		System.out.println(this);
+		//System.out.println("afterShift");
+		//System.out.println(this);
 	}
 	
 	/**
@@ -112,11 +112,11 @@ public class MinimalPlanBase
 		//adds the list at the beginning of the map.
 		_planBase.add(0, first);
 		
-		System.out.println("beforeShift");
-		System.out.println(this);
+		//System.out.println("beforeShift");
+		//System.out.println(this);
 		shift(0);
-		System.out.println("afterShift");
-		System.out.println(this);
+		//System.out.println("afterShift");
+		//System.out.println(this);
 	}
 	
 	/**
@@ -144,11 +144,11 @@ public class MinimalPlanBase
 		_planBase.add(last);
 		
 		
-		System.out.println("beforeShift");
-		System.out.println(this);
+		//System.out.println("beforeShift");
+		//System.out.println(this);
 		shift(_planBase.size()-2);
-		System.out.println("afterShift");
-		System.out.println(this);
+		//System.out.println("afterShift");
+		//System.out.println(this);
 	}
 	
 	public synchronized void insertOnlyWhenIdle(int actionId, int... unitIds)
@@ -294,9 +294,9 @@ public class MinimalPlanBase
 		//System.out.println(a);
 		a.insertFirst(3, 2,3);
 		
-		System.out.println("action finsiehd 3");
+		//System.out.println("action finsiehd 3");
 		a.actionsFinished(3);
-		System.out.println(a);
+		//System.out.println(a);
 		a.insertFirst(4, 1,3,5);
 		//
 		a.insertLast(5, 4,5);

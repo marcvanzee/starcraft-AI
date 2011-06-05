@@ -11,6 +11,7 @@ import starcraft.actions.PlanBase;
 import starcraft.parameters.Grid;
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.*;
+import eisbot.proxy.types.UnitType.UnitTypes;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
 import apapl.data.APLList;
@@ -69,7 +70,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		_agents = new ArrayList<Agent>();
 		
 		_bwapi = new BWAPICoop(this);
-		//_clientThread = new Thread(new BWAPIClient(_bwapi));
+		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 		
 	/**
@@ -106,36 +107,60 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	{
 		for( Agent agent : _agents )
 		{
-			_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
+			//_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
 			
 			if( agent.getUnits().contains( unit ) )
 			{
-				_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
+				//_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
 				return agent;
 			}
 		}
 		
-		_logger.info( "No agent found for " + unit );
+		//_logger.info( "No agent found for " + unit );
 		return null;
 	}
 	
 	protected void distributeUnits() {
 		for (Unit unit : _bwapi.getMyUnits()) 
 		{
-			_logger.info("In loop");
+			//_logger.info("In loop");
 			
+			// <Marc> TODO: distribution is not correct, something goes wrong with the
+			// coordinate system. Moreover, buildings are also counted as units! weird....
+			// Temporarily (ugly) fix:
+			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) {
+				_agents.get
+						(
+								(unit.getX() < 1000) ?
+								0 : 1
+						)
+						.addUnit(unit.getID());
+			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) {
+				_agents.get
+				(
+						(unit.getX() < 1000) ?
+						0 : 1
+				)
+				.addBuilding(unit.getID());
+			}
+			
+			// this needs to be checked
+			/*
 			// if units are left top, allocate them to the first agent
 			if (getUnitLocation(unit) == Grid.LOC_NW) 
 			{
+				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(0).getName());
 				_agents.get(0).addUnit(unit.getID());
 			} 
 			else 
 			{
+				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(1).getName());
 				_agents.get(1).addUnit(unit.getID());
 			}
+			*/
 		}
 		
-		_logger.info("Units distributed");
+		//_logger.info("Units distributed");
 	}
 	
 	/**
@@ -149,7 +174,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		int y = unit.getTileY();
 		int width = Grid.WIDTH;
 		int height = Grid.HEIGHT;
-		_logger.info("before _bwapi.getMap)");
+		//_logger.info("before _bwapi.getMap)");
 		
 		
 		//See info of method getMap(), returns null if loadMapData hasnt been called!
@@ -161,9 +186,9 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		}
 		else
 		{
-			_logger.info("Bwapi.getMap() == null");
+			//_logger.info("Bwapi.getMap() == null");
 		}
-		_logger.info("getUnitLoccation " + x + " - " + y + " - " + width + " - " + height);
+		//F_logger.info("getUnitLoccation " + x + " - " + y + " - " + width + " - " + height);
 		
 		if (x < width/2) 
 		{
@@ -203,6 +228,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public synchronized Term hello(String agentName) throws Exception
 	{
 		if (_agents.size() < TOTAL_AGENTS) {
+			_logger.info(agentName + " registered");
 			_agents.add(new Agent(agentName));
 			if (_agents.size() == TOTAL_AGENTS) {
 				start();
@@ -210,6 +236,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		} else {
 			throw new Exception("env> ERROR: too many agents try to register");
 		}
+		_logger.info("returning " + agentName);
 		
 		return wrapBoolean(true);
 	}
@@ -432,13 +459,12 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		}
 		
 		_logger.info("Plan Bases setup");
-		
-		throwEventToAll("gameStarted");
 	}
 	
 	@Override
 	public void gameUpdate() 
 	{
+		System.out.println("gameupdate");
 		for(PlanBase planBase : _planBases.values())
 		{
 			planBase.executeActions(_bwapi);
