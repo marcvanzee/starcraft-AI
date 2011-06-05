@@ -20,17 +20,36 @@ import apapl.data.Term;
 
 public class Env extends apapl.Environment implements BWAPIEventListener
 {
-	private static final int TOTAL_AGENTS = 2;
+	/**
+	 * Marc // EDIT #1
+	 * organized methods in the following order:
+	 * 
+	 * variable declarations
+	 * constructors
+	 * private/protected methods
+	 * public methods - calls by the 2apl agents
+	 * public methods - calls by BWAPI
+	 * other public methods (static)
+	 * 
+	 * Marc // EDIT #2
+	 * - changed all "private" fields to "protected" - allows extending this class
+	 * - Removed all "synchronized" from the private methods. They will only be called
+	 *   by this class, which does not need synchronization with itself.
+	 */
 	
-	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
+	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
+	
+	protected static final int TOTAL_AGENTS = 2;
+
+	protected List<Agent> _agents;
+	protected HashMap<String,PlanBase> _planBases;
+	
+	protected Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	private BWAPICoop _bwapi;
-	private Thread _clientThread;
+	protected BWAPICoop _bwapi;
+	protected Thread _clientThread;
 	
-	// *** Edit Marc: arraylist of agents.  *** //
-	private List<Agent> _agents;
-	// *** Edit: Frank AgentName => PlanBase  mapping *** //
-	private HashMap<String,PlanBase> _planBases;
+	// ------------------------------------------ CONSTRUCTORS ----------------------------
 	
 	public Env()
 	{
@@ -38,22 +57,21 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		_logger.info("Environment Initialised..");
 	}
 	
+	// ------------------------------------------ PRIVATE METHODS ----------------------------
+	
 	/**
 	 * Initializes the environment.
 	 */
 	private void init()
 	{
-		// Edit Marc: by declaring the agents with their units in this class, the BWAPICoop class is not needed anymore
-		// Edit Frank: However for future changes, i prefer to work with BWAPICoop class.
-		// locations of our agents
 		//int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
 		_planBases = new HashMap<String,PlanBase>();
 		_agents = new ArrayList<Agent>();
 		
 		_bwapi = new BWAPICoop(this);
-		_clientThread = new Thread(new BWAPIClient(_bwapi));
+		//_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
-	
+		
 	/**
 	 * Starts the jnibwapi client thread.
 	 */
@@ -62,27 +80,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		if(!_clientThread.isAlive())
 			_clientThread.start();
 	}
-		 
-	public synchronized Term hello(String agentName) throws Exception
-	{
-		if (_agents.size() < TOTAL_AGENTS) {
-			_agents.add(new Agent(agentName));
-			if (_agents.size() == TOTAL_AGENTS) {
-				start();
-			}
-		} else {
-			throw new Exception("env> ERROR: too many agents try to register");
-		}
-		
-		return wrapBoolean(true);
-	}
 	
 	/**
 	 * Get the agent object using a String
 	 * @param agentName
 	 * @return
 	 */
-	private synchronized Agent getAgent( String agentName )
+	private Agent getAgent( String agentName )
 	{
 		for( Agent agent : _agents )
 		{
@@ -115,6 +119,100 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return null;
 	}
 	
+	private void distributeUnits() {
+		for (Unit unit : _bwapi.getMyUnits()) 
+		{
+			_logger.info("In loop");
+			
+			// if units are left top, allocate them to the first agent
+			if (getUnitLocation(unit) == Grid.LOC_NW) 
+			{
+				_agents.get(0).addUnit(unit.getID());
+			} 
+			else 
+			{
+				_agents.get(1).addUnit(unit.getID());
+			}
+		}
+		
+		_logger.info("Units distributed");
+	}
+	
+	/**
+	 * Returns the squadron that the units is positioned in, based on values in Parameters class
+	 * @param unit		The unit under consideration
+	 * @return			The squadron, see Parameters class for exact values
+	 */
+	private int getUnitLocation(Unit unit)
+	{
+		int x = unit.getTileX();
+		int y = unit.getTileY();
+		int width = Grid.WIDTH;
+		int height = Grid.HEIGHT;
+		_logger.info("before _bwapi.getMap)");
+		
+		
+		//See info of method getMap(), returns null if loadMapData hasnt been called!
+		if(_bwapi.getMap() != null)
+		{	
+			width = _bwapi.getMap().getWalkWidth();
+			height= _bwapi.getMap().getWalkHeight();
+			
+		}
+		else
+		{
+			_logger.info("Bwapi.getMap() == null");
+		}
+		_logger.info("getUnitLoccation " + x + " - " + y + " - " + width + " - " + height);
+		
+		if (x < width/2) 
+		{
+			// Marc: we need to check whether y = 0 is bottom or top, but I think it is bottom
+			return (y < height/2) ? Grid.LOC_SW : Grid.LOC_NW;
+		} else {
+			return (y < height/2) ? Grid.LOC_SE : Grid.LOC_SW;
+		}
+	}
+	
+	private void throwEventToAll(String name)
+	{
+		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
+		APLFunction event = new APLFunction(name, new APLIdent("true"));
+		String[] agNames = getAgentNames();
+		super.throwEvent(event, agNames);
+	}
+	
+	private void throwEventToAll( APLFunction event )
+    {
+            String[] agNames = getAgentNames();
+            super.throwEvent(event, agNames);
+    }
+	
+	private String[] getAgentNames() 
+	{
+		String s[] = new String[_agents.size()];
+		for (int i=0; i<_agents.size();i++) {
+			s[i] = _agents.get(i).getName();
+		}
+		
+		return s;
+	}
+	
+	// ------------------------------------------ PUBLIC 2APL METHODS  ----------------------------
+	
+	public synchronized Term hello(String agentName) throws Exception
+	{
+		if (_agents.size() < TOTAL_AGENTS) {
+			_agents.add(new Agent(agentName));
+			if (_agents.size() == TOTAL_AGENTS) {
+				start();
+			}
+		} else {
+			throw new Exception("env> ERROR: too many agents try to register");
+		}
+		
+		return wrapBoolean(true);
+	}
 	
 	/**
 	 * Select num random units
@@ -155,7 +253,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return intListToAPLList(unitIds);
 	}
 	
-	public APLList intListToAPLList(List<Integer> unitIds) {
+	public synchronized APLList intListToAPLList(List<Integer> unitIds) {
 		LinkedList<Term> aplIds = new LinkedList<Term>();
 		
 		for (Integer id : unitIds) {
@@ -241,21 +339,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return intListToAPLList(list);
 	}
 	
-	
-	
-	public static String[] unwrapStringArray(APLList list)
-	{
-		String[] array = new String[list.toLinkedList().size()];
-		int i=0;
-		for(Term t : list.toLinkedList())
-		{
-			array[i] = t.toString();
-			i++;
-		}
-		return array;
-	}
-	
-	
 //	/**
 //	 * Select all the units currently under attack
 //	 * @param agentName
@@ -291,40 +374,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return wrapBoolean(true);
 	}
 	
-	public static APLListVar wrapBoolean( boolean b )
-	{
-		return new APLList(new APLIdent(b ? "true" : "false"));
-	}
-	
-	public static void main(String[] args)
-	{
-		new Env();
-	}
-	
-	private void throwEventToAll(String name)
-	{
-		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
-		APLFunction event = new APLFunction(name, new APLIdent("true"));
-		String[] agNames = getAgentNames();
-		super.throwEvent(event, agNames);
-	}
-	
-	private void throwEventToAll( APLFunction event )
-    {
-            String[] agNames = getAgentNames();
-            super.throwEvent(event, agNames);
-    }
-
-	
-	private String[] getAgentNames() {
-		String s[] = new String[_agents.size()];
-		for (int i=0; i<_agents.size();i++) {
-			s[i] = _agents.get(i).getName();
-		}
-		
-		return s;
-	}
-	
 	/**
 	 * Select an enemyID unit with own unitIDs
 	 * @param agentName
@@ -355,41 +404,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return wrapBoolean(true);
 	}
 	
-	/**
-	 * Returns the squadron that the units is positioned in, based on values in Parameters class
-	 * @param unit		The unit under consideration
-	 * @return			The squadron, see Parameters class for exact values
-	 */
-	private int getUnitLocation(Unit unit)
-	{
-		int x = unit.getTileX();
-		int y = unit.getTileY();
-		int width = Grid.WIDTH;
-		int height = Grid.HEIGHT;
-		_logger.info("before _bwapi.getMap)");
-		
-		
-		//See info of method getMap(), returns null if loadMapData hasnt been called!
-		if(_bwapi.getMap() != null)
-		{	
-			width = _bwapi.getMap().getWalkWidth();
-			height= _bwapi.getMap().getWalkHeight();
-			
-		}
-		else
-		{
-			_logger.info("Bwapi.getMap() == null");
-		}
-		_logger.info("getUnitLoccation " + x + " - " + y + " - " + width + " - " + height);
-		
-		if (x < width/2) 
-		{
-			// Marc: we need to check whether y = 0 is bottom or top, but I think it is bottom
-			return (y < height/2) ? Grid.LOC_SW : Grid.LOC_NW;
-		} else {
-			return (y < height/2) ? Grid.LOC_SE : Grid.LOC_SW;
-		}
-	}
+	
+	// ------------------------------------------ PUBLIC BWAPI METHODS ----------------------------
 	
 	/**
 	 * Allocates units to the agents by their location
@@ -404,22 +420,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		//Loads the map, use false else starcraft might freeze.
 		_bwapi.loadMapData(false);
 	
-		for (Unit unit : _bwapi.getMyUnits()) 
-		{
-			_logger.info("In loop");
-			
-			// if units are left top, allocate them to the first agent
-			if (getUnitLocation(unit) == Grid.LOC_NW) 
-			{
-				_agents.get(0).addUnit(unit.getID());
-			} 
-			else 
-			{
-				_agents.get(1).addUnit(unit.getID());
-			}
-		}
-		
-		_logger.info("Units distributed");
+		distributeUnits();
 		
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
@@ -551,5 +552,29 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	public void unitMorph(int unitID) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	// ------------------------------------------ PUBLIC STATIC METHODS ----------------------------
+	
+	public static APLListVar wrapBoolean( boolean b )
+	{
+		return new APLList(new APLIdent(b ? "true" : "false"));
+	}
+	
+	public static void main(String[] args)
+	{
+		new Env();
+	}
+	
+	public static String[] unwrapStringArray(APLList list)
+	{
+		String[] array = new String[list.toLinkedList().size()];
+		int i=0;
+		for(Term t : list.toLinkedList())
+		{
+			array[i] = t.toString();
+			i++;
+		}
+		return array;
 	}
 }
