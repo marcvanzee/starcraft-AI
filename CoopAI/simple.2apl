@@ -1,0 +1,83 @@
+/*
+ * Simple agent by Marc
+ * Agents make decisions based on:
+ *
+ * Number of own units
+ * Position of its own units (center point)
+ * Position of other units (center point)
+ * State of the base (damagepoints)
+ * Position of the base
+ * Character
+ *
+ * So agents dont know where their own units all, but only where the
+ * center point is. This simplifies the problem heavily.
+ */
+BeliefUpdates:
+	{true} 				EndGame()				{winGame}
+
+	{numUnits(X)} 		SetUnits(Y)				{not numUnits(X),numUnits(Y)}
+
+	// CP = Center Point, it is the center of a group of units
+	// enemyCP is a list of points that represent different groups of enemies
+	{ownCP(X,Y)}		SetOwnCP(Xnew,Ynew}		{not ownCP(X,Y),ownCP(Xnew,Ynew)}
+	{enemyCP(L)}		SetEnemyCP(Lnew)		{not enemyCP(L),enemyCP(Lnew)}
+
+	{basePos(X,Y)}		SetBasePos(Xnew,Ynew)	{not basePos(X,Y),basePos(Xnew,Ynew)}
+	{baseHP(X)}			SetBaseHP(Y)			{not baseHP(X),baseHP(Y)}
+
+	// character is defined as willingness to attack (WTA), domain [0,10]
+	{wta(X)}			SetWTA(Y)				{not wta(X),wta(Y)}
+
+Beliefs:
+	// initialize, because belief updates require this.
+	numUnits(-1)
+	ownCP(-1,-1)
+	enemyCP(-1,-1)
+	basePos(-1,-1)
+	baseHP(-1,-1)
+	wta(-1)
+	
+Plans:
+	% register with the environment
+	@starcraft(hello(),_);
+
+PG-rules:
+
+winGame <- true |
+{
+	print(defeatEnemy);
+	skip;
+	EndGame()
+}
+
+PC-rules:		
+    % Note the use of a function with parameter as events, since functions with no parameters are not supported.
+
+	event(units(X), starcraft) <- true | {
+		SetUnits(X)
+	}
+	
+	event(ownCP(X,Y), starcraft) <- true | {
+		SetOwnCP(X,Y)
+	}
+	
+	event(enemyCP(X,Y), starcraft) <- true | {
+		SetEnemyCP(X,Y)
+	}
+	
+	event(basePosition(X,Y), starcraft) <- true | {
+		SetBasePos(X,Y)
+	}
+	
+	event(baseHP(X), starcraft) <- true | {
+		SetBaseHP(X)
+	}
+	
+	event(wta(X), starcraft) <- true | {
+		SetWTA(X)
+	}
+	
+	event(nextMove(_), starcraft <- true | {
+		// implement reasoning here
+	}
+		
