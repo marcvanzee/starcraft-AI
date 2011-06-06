@@ -1,24 +1,36 @@
 package starcraft;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import eisbot.proxy.model.Unit;
+
 public class Agent 
 {
 	private String _agName;
-	private Set<Integer> _units = new HashSet<Integer>();
+	
+	/**
+	 * HashMap<int,bool>
+	 * int: 		unitID
+	 * boolean: 	whether this unit is a building
+	 */
+	private Set<Integer> _units 	= new HashSet<Integer>();
 	private Set<Integer> _buildings = new HashSet<Integer>();
+	private Point _centerPoint;
+	private BWAPICoop _bwapi;
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param agName	Name of the agent, useful to match it with the BDI agent
 	 */
-	public Agent(String agName) {
+	public Agent(String agName, BWAPICoop _bwapi) {
 		this._agName = agName;
+		this._bwapi = _bwapi;
 	}
 	
 	/**
@@ -26,8 +38,8 @@ public class Agent
 	 * 
 	 * @param unit
 	 */
-	public void addUnit(int unit) {
-		_units.add(unit);
+	public void addUnit(int unitID) {
+		_units.add(unitID);
 	}
 	
 	/**
@@ -35,27 +47,18 @@ public class Agent
 	 * 
 	 * @param unit
 	 */
-	public void addBuilding(int unit) {
-		_buildings.add(unit);
+	public void addBuilding(int unitID) {
+		_buildings.add(unitID);
 	}
 	
 	/**
-	 * Remove a specific unit from the agent
+	 * Remove a specific unit from the agent, that can be a building or a character
 	 * 
 	 * @param unit		Id of the unit to remove
 	 */
-	public void removeUnit(int unit) {
-		_units.remove(unit);
-	}
-	
-	/**
-	 * Remove a specific building from the agent
-	 * Note: buildings are also refered to as units in BWAPI
-	 * 
-	 * @param unit
-	 */
-	public void removeBuilding(int unit) {
-		_buildings.remove(unit);
+	public void removeElement(int id) {
+		_units.remove(id);
+		_buildings.remove(id);
 	}
 	
 	/**
@@ -95,7 +98,18 @@ public class Agent
 	 * @return building id
 	 */
 	public int getBuilding() {
-		return (Integer)_buildings.toArray()[0];
+		
+		return (_buildings.size() > 0) ? (Integer)_buildings.toArray()[0] : -1;
+	}
+	
+	/**
+	 * Returns all buildings
+	 * 
+	 * @return
+	 */
+	public List<Integer> getBuildings() 
+	{
+		return new ArrayList<Integer>(_buildings);
 	}
 	
 	/**
@@ -116,5 +130,38 @@ public class Agent
 	 */
 	public int countUnits() {
 		return _units.size();
+	}
+	
+	/**
+	 * TODO: hier wordt de planbase geinitialiseerd
+	 */
+	public void initPlanBase() {
+		//Setup plan bases for the agents.
+		//TEST: insert attack action to position 0.0.
+		/*
+		for(Agent agent : _agents)
+		{
+			PlanBase planBase = new PlanBase(agent.getUnits());
+			planBase.insertFirst(new Attack(agent.getUnits(), 0, 0));
+			_planBases.put(agent.getName(), planBase);
+		}*/
+	}
+	
+	public void update() {
+		updateCP();
+	}
+	
+	public void updateCP() {
+		int avgX=0, avgY=0;
+		
+		for (int unitID : getUnits()) {
+			Unit u = _bwapi.getUnit(unitID);
+			avgX += u.getX();
+			avgY += u.getY();
+		}
+		avgX /= countUnits();
+		avgY /= countUnits();
+		
+		_centerPoint = new Point(avgX, avgY);
 	}
 }

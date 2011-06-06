@@ -8,10 +8,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import starcraft.actions.Attack;
 import starcraft.actions.PlanBase;
-import starcraft.parameters.Grid;
-import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.*;
-import eisbot.proxy.types.UnitType.UnitTypes;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
 import apapl.data.APLList;
@@ -19,36 +16,20 @@ import apapl.data.APLListVar;
 import apapl.data.APLNum;
 import apapl.data.Term;
 
-public class Env extends apapl.Environment implements BWAPIEventListener
-{
-	/**
-	 * Marc // EDIT #1
-	 * organized methods in the following order:
-	 * 
-	 * variable declarations
-	 * constructors
-	 * private/protected methods
-	 * public methods - calls by the 2apl agents
-	 * public methods - calls by BWAPI
-	 * other public methods (static)
-	 * 
-	 * Marc // EDIT #2
-	 * - changed all "private" fields to "protected" - allows extending this class
-	 * - Removed all "synchronized" from the private methods. They will only be called
-	 *   by this class, which does not need synchronization with itself.
-	 */
-	
+public class Env extends apapl.Environment
+{	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
 	
-	protected static final int TOTAL_AGENTS = 2;
+	private static final int TOTAL_AGENTS = 2;
 
-	protected List<Agent> _agents;
-	protected HashMap<String,PlanBase> _planBases;
+	private List<Agent> _agents;
+	private HashMap<String,PlanBase> _planBases;
 	
-	protected Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
+	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	 
-	protected BWAPICoop _bwapi;
-	protected Thread _clientThread;
+	private BWAPICoop _bwapi;
+	private Thread _clientThread;
+	private CoopEventListener _listener;
 	
 	// ------------------------------------------ CONSTRUCTORS ----------------------------
 	
@@ -69,7 +50,8 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		_planBases = new HashMap<String,PlanBase>();
 		_agents = new ArrayList<Agent>();
 		
-		_bwapi = new BWAPICoop(this);
+		_listener = new CoopEventListener(_bwapi, this, _agents);
+		_bwapi = new BWAPICoop(_listener);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 		
@@ -87,7 +69,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @param agentName
 	 * @return
 	 */
-	protected Agent getAgent( String agentName )
+	public Agent getAgent( String agentName )
 	{
 		for( Agent agent : _agents )
 		{
@@ -103,13 +85,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	 * @param unit
 	 * @return
 	 */
-	protected Agent getAgent( Integer unit )
+	public Agent getAgent( Integer unit )
 	{
 		for( Agent agent : _agents )
 		{
 			//_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
 			
-			if( agent.getUnits().contains( unit ) )
+			if( agent.getUnits().contains( unit ) || agent.getBuildings().contains(unit))
 			{
 				//_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
 				return agent;
@@ -120,86 +102,16 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return null;
 	}
 	
-	protected void distributeUnits() {
-		for (Unit unit : _bwapi.getMyUnits()) 
-		{
-			//_logger.info("In loop");
-			
-			// <Marc> TODO: distribution is not correct, something goes wrong with the
-			// coordinate system. Moreover, buildings are also counted as units! weird....
-			// Temporarily (ugly) fix:
-			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) {
-				_agents.get
-						(
-								(unit.getX() < 1000) ?
-								0 : 1
-						)
-						.addUnit(unit.getID());
-			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) {
-				_agents.get
-				(
-						(unit.getX() < 1000) ?
-						0 : 1
-				)
-				.addBuilding(unit.getID());
-			}
-			
-			// this needs to be checked
-			/*
-			// if units are left top, allocate them to the first agent
-			if (getUnitLocation(unit) == Grid.LOC_NW) 
-			{
-				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(0).getName());
-				_agents.get(0).addUnit(unit.getID());
-			} 
-			else 
-			{
-				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(1).getName());
-				_agents.get(1).addUnit(unit.getID());
-			}
-			*/
-		}
-		
-		//_logger.info("Units distributed");
-	}
-	
 	/**
-	 * Returns the squadron that the units is positioned in, based on values in Parameters class
-	 * @param unit		The unit under consideration
-	 * @return			The squadron, see Parameters class for exact values
+	 * Added a public version of throwEvent so that the eventlistener can use it
+	 * @param agName
+	 * @param f
 	 */
-	protected int getUnitLocation(Unit unit)
-	{
-		int x = unit.getTileX();
-		int y = unit.getTileY();
-		int width = Grid.WIDTH;
-		int height = Grid.HEIGHT;
-		//_logger.info("before _bwapi.getMap)");
-		
-		
-		//See info of method getMap(), returns null if loadMapData hasnt been called!
-		if(_bwapi.getMap() != null)
-		{	
-			width = _bwapi.getMap().getWalkWidth();
-			height= _bwapi.getMap().getWalkHeight();
-			
-		}
-		else
-		{
-			//_logger.info("Bwapi.getMap() == null");
-		}
-		//F_logger.info("getUnitLoccation " + x + " - " + y + " - " + width + " - " + height);
-		
-		if (x < width/2) 
-		{
-			// Marc: we need to check whether y = 0 is bottom or top, but I think it is bottom
-			return (y < height/2) ? Grid.LOC_SW : Grid.LOC_NW;
-		} else {
-			return (y < height/2) ? Grid.LOC_SE : Grid.LOC_SW;
-		}
+	public void throwEvent(APLFunction f, String agName) {
+		super.throwEvent(f, agName);
 	}
 	
-	protected void throwEventToAll(String name)
+	public void throwEventToAll(String name)
 	{
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
 		APLFunction event = new APLFunction(name, new APLIdent("true"));
@@ -207,13 +119,13 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		super.throwEvent(event, agNames);
 	}
 	
-	protected void throwEventToAll( APLFunction event )
+	public void throwEventToAll( APLFunction event )
     {
             String[] agNames = getAgentNames();
             super.throwEvent(event, agNames);
     }
 	
-	protected String[] getAgentNames() 
+	private String[] getAgentNames() 
 	{
 		String s[] = new String[_agents.size()];
 		for (int i=0; i<_agents.size();i++) {
@@ -229,7 +141,7 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 	{
 		if (_agents.size() < TOTAL_AGENTS) {
 			_logger.info(agentName + " registered");
-			_agents.add(new Agent(agentName));
+			_agents.add(new Agent(agentName, _bwapi));
 			if (_agents.size() == TOTAL_AGENTS) {
 				start();
 			}
@@ -431,155 +343,6 @@ public class Env extends apapl.Environment implements BWAPIEventListener
 		return wrapBoolean(true);
 	}
 	
-	
-	// ------------------------------------------ PUBLIC BWAPI METHODS ----------------------------
-	
-	/**
-	 * Allocates units to the agents by their location
-	 * Method is called by BWAPICoop when the game starts
-	 */
-	@Override
-	public void gameStarted() 
-	{
-		_bwapi.enableUserInput();
-		_logger.info("Game Started");
-		
-		//Loads the map, use false else starcraft might freeze.
-		_bwapi.loadMapData(false);
-	
-		distributeUnits();
-		
-		//Setup plan bases for the agents.
-		//TEST: insert attack action to position 0.0.
-		for(Agent agent : _agents)
-		{
-			PlanBase planBase = new PlanBase(agent.getUnits());
-			planBase.insertFirst(new Attack(agent.getUnits(), 0, 0));
-			_planBases.put(agent.getName(), planBase);
-		}
-		
-		_logger.info("Plan Bases setup");
-	}
-	
-	@Override
-	public void gameUpdate() 
-	{
-		System.out.println("gameupdate");
-		for(PlanBase planBase : _planBases.values())
-		{
-			planBase.executeActions(_bwapi);
-		}
-	}
-
-	@Override
-	public void gameEnded() 
-	{
-		throwEventToAll("gameEnded");		
-	}
-
-	@Override
-	public void unitDiscover(int unitID) 
-	{	
-		APLFunction event = new APLFunction("enemyUnitDiscovered", new APLNum(unitID));
-        throwEventToAll( event );
-
-		/*
-	
-		List<Unit> enemies = new LinkedList<Unit>();
-		enemies.add( _bwapi.getUnit(unitID) );
-		
-		for(Agent agent: _agents)
-		{
-			PlanBase planBase = _planBases.get(agent.getName());
-			planBase.insertFirst(new Attack(agent.getUnits(), enemies));
-		}
-		*/
-	}
-	
-	@Override
-	public void connected() 
-	{
-		throwEventToAll("connected");
-	}
-	
-	@Override
-	public void keyPressed(int keyCode) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void matchEnded(boolean winner) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void playerLeft(int id) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void nukeDetect(int x, int y) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void nukeDetect() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unitEvade(int unitID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unitShow(int unitID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unitHide(int unitID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unitCreate(int unitID) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unitDestroy(int unitID) {
-		// TODO Auto-generated method stub
-		
-		
-		
-//		Unit unit = new Unit( unitID );
-		Agent agent = this.getAgent( unitID );
-		_logger.info( "unitDestroy " + unitID + " agent of unit: " + agent.getName() );
-		
-		APLFunction event = new APLFunction( "ownUnitDestroyed", new APLNum( agent.getUnits().size() ) );
-		
-		_logger.info( event.toString() );
-		
-		super.throwEvent(event, agent.getName() );
-//		throwEventToAll( event );
-	}
-
-	@Override
-	public void unitMorph(int unitID) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	// ------------------------------------------ PUBLIC STATIC METHODS ----------------------------
 	
 	public static APLListVar wrapBoolean( boolean b )
