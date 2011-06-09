@@ -1,5 +1,6 @@
 package starcraft;
 
+import java.awt.Point;
 import java.util.List;
 
 import starcraft.parameters.Grid;
@@ -159,11 +160,38 @@ public class CoopEventListener implements BWAPIEventListener {
 	 * to the 2APL agents. The Agents class has access to the BWAPI interface, so is able
 	 * to update itself. In this methods we only need to send the information to the 2APL agents.
 	 * 
-	 * we are sending the following APLFunction: gameUpdate(ownCP, baseHP, enemyCP) 
+	 * we are sending the following APLFunction: gameUpdate(ownCP, baseHP, numEnemyUnits, [enemyCP1, enemyCP2, ...])
+	 * 
+	 * there are more center points of enemies possible, which depends on their location
 	 */
 	private void updateAgents() {
-		for (Agent ag : _agents) {
-			ag.update();
+		System.out.println("Update!");
+		int numEnemies=0, avgX=0, avgY=0;
+		
+		for (Unit enemy : _bwapi.getEnemyUnits()) {
+			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) {
+				numEnemies++;
+				avgX += enemy.getX();
+				avgY += enemy.getY();
+			}
+		}
+		if (numEnemies > 0) {
+			avgX /= numEnemies;
+			avgY /= numEnemies;
+		}
+		
+		APLList ownCP;
+		APLNum baseHP, numEnemyUnits;
+		
+		for (Agent agent : _agents) {
+			agent.update();
+			Point cp = agent.getCP();
+			ownCP = new APLList(new APLNum(cp.x), new APLNum(cp.y));
+			baseHP = new APLNum(agent.getBaseHP());
+			numEnemyUnits = new APLNum(numEnemies);
+			
+			APLFunction f = new APLFunction("gameUpdate", ownCP, baseHP, numEnemyUnits, new APLList());
+			throwEvent(f, agent.getName());
 		}
 	}
 	
