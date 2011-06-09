@@ -1,57 +1,61 @@
 /*
  * Simple agent by Marc
- * Agents make decisions based on:
+ * 
+ * ------- Initial parameters --------
+ * sent to the agent when the game initializes  
  *
- * Number of own units
- * Position of its own units (center point)
- * Position of other units (center point)
- * State of the base (damagepoints)
- * Position of the base
- * Character
+ * - basePos(X,Y)
+ * - wta(X)				willingness to attack, or aggressiveness
  *
- * So agents dont know where their own units all, but only where the
- * center point is. This simplifies the problem heavily.
+ * ------- Sensing info --------------
+ * sent to the agent every tick
+ * 
+ * 1. WORLD INFORMATION
+ * - numUnits(int)
+ * - unitsCP(X,Y)     	center point of own units
+ * - numEnemyUnits(int)
+ * - enemyUnitsCP(X,Y)
+ * - enemyBasesPos(X) 	where X is a list of points ([X,Y]) that each define a building of the
+ *                  	enemy. For example: enemyBases([0,2],[4,1])
+ *
+ * 2. EVENTS
+ * - unitDestroyed()  	one of own units has been destroyed
+ * - unitDiscovered()	an enemy unit has been discovered
+ * - buildingAttacked()	#### I DO NOT KNOW WHETHER THIS EVENT EXISTS ###
  */
+ 
+Beliefs:
+	/* initialize, because belief updates require this. */
+	numUnits(-1).
+	ownCP(-1,-1).
+	enemyCP(-1,-1).
+	basePos(-1,-1).
+	baseHP(-1,-1).
+	wta(-1).
+	
 BeliefUpdates:
-	{true} 				EndGame()				{winGame}
-
 	{numUnits(X)} 		SetUnits(Y)				{not numUnits(X),numUnits(Y)}
 
-	// CP = Center Point, it is the center of a group of units
-	// enemyCP is a list of points that represent different groups of enemies
-	{ownCP(X,Y)}		SetOwnCP(Xnew,Ynew}		{not ownCP(X,Y),ownCP(Xnew,Ynew)}
+	/* CP = Center Point, it is the center of a group of units
+	 * enemyCP is a list of points that represent different groups of enemies
+	 */
+	{ownCP(X,Y)}		SetOwnCP(Xnew,Ynew)		{not ownCP(X,Y),ownCP(Xnew,Ynew)}
 	{enemyCP(L)}		SetEnemyCP(Lnew)		{not enemyCP(L),enemyCP(Lnew)}
 
 	{basePos(X,Y)}		SetBasePos(Xnew,Ynew)	{not basePos(X,Y),basePos(Xnew,Ynew)}
 	{baseHP(X)}			SetBaseHP(Y)			{not baseHP(X),baseHP(Y)}
 
-	// character is defined as willingness to attack (WTA), domain [0,10]
+	/* character is defined as willingness to attack (WTA), domain [0,10] */
 	{wta(X)}			SetWTA(Y)				{not wta(X),wta(Y)}
-
-Beliefs:
-	// initialize, because belief updates require this.
-	numUnits(-1)
-	ownCP(-1,-1)
-	enemyCP(-1,-1)
-	basePos(-1,-1)
-	baseHP(-1,-1)
-	wta(-1)
+	
+	{numUnits(X)}		DestroyUnit(_)			{not numUnits(X), numUnits(X-1)}
 	
 Plans:
-	% register with the environment
-	@starcraft(hello(),_);
-
-PG-rules:
-
-winGame <- true |
-{
-	print(defeatEnemy);
-	skip;
-	EndGame()
-}
+	/* register with the environment */
+	@starcraft(hello(),_)
 
 PC-rules:		
-    % Note the use of a function with parameter as events, since functions with no parameters are not supported.
+    /* Note the use of a function with parameter as events, since functions with no parameters are not supported. */
 
 	event(units(X), starcraft) <- true | {
 		SetUnits(X)
@@ -61,8 +65,8 @@ PC-rules:
 		SetOwnCP(X,Y)
 	}
 	
-	event(enemyCP(X,Y), starcraft) <- true | {
-		SetEnemyCP(X,Y)
+	event(enemyCP(L), starcraft) <- true | {
+		SetEnemyCP(L)
 	}
 	
 	event(basePosition(X,Y), starcraft) <- true | {
@@ -77,7 +81,11 @@ PC-rules:
 		SetWTA(X)
 	}
 	
-	event(nextMove(_), starcraft <- true | {
-		// implement reasoning here
+	event(unitDestroyed(_), starcraft) <- numUnits(X) | {
+		DestroyUnit(X)
 	}
-		
+	
+	event(nextMove(_), starcraft) <- true | {
+		/* implement reasoning here */
+		skip
+	}
