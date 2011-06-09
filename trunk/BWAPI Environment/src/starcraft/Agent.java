@@ -6,23 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-
 import eisbot.proxy.model.Unit;
 
 public class Agent 
 {
 	private String _agName;
 	
-	/**
-	 * HashMap<int,bool>
-	 * int: 		unitID
-	 * boolean: 	whether this unit is a building
-	 */
-	private Set<Integer> _units 	= new HashSet<Integer>();
-	private Set<Integer> _buildings = new HashSet<Integer>();
+	private Set<Integer> _units	= new HashSet<Integer>();
+	private int _base, _baseHP;
 	private Point _centerPoint;
 	private BWAPICoop _bwapi;
-	
+	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character
+									// domain [0,10]
 	/**
 	 * Constructor
 	 * 
@@ -31,6 +26,7 @@ public class Agent
 	public Agent(String agName, BWAPICoop _bwapi) {
 		this._agName = agName;
 		this._bwapi = _bwapi;
+		this._WTA = new Random().nextInt(11);
 	}
 	
 	/**
@@ -48,7 +44,7 @@ public class Agent
 	 * @param unit
 	 */
 	public void addBuilding(int unitID) {
-		_buildings.add(unitID);
+		_base = unitID;
 	}
 	
 	/**
@@ -58,7 +54,7 @@ public class Agent
 	 */
 	public void removeElement(int id) {
 		_units.remove(id);
-		_buildings.remove(id);
+		_base = -1;
 	}
 	
 	/**
@@ -99,17 +95,7 @@ public class Agent
 	 */
 	public int getBuilding() {
 		
-		return (_buildings.size() > 0) ? (Integer)_buildings.toArray()[0] : -1;
-	}
-	
-	/**
-	 * Returns all buildings
-	 * 
-	 * @return
-	 */
-	public List<Integer> getBuildings() 
-	{
-		return new ArrayList<Integer>(_buildings);
+		return _base;
 	}
 	
 	/**
@@ -147,11 +133,17 @@ public class Agent
 		}*/
 	}
 	
+	/**
+	 * The following information needs to be updated:
+	 * - center point of units
+	 * - the health points of the base
+	 */
 	public void update() {
 		updateCP();
+		updateBaseHP();
 	}
 	
-	public void updateCP() {
+	private void updateCP() {
 		int avgX=0, avgY=0;
 		
 		for (int unitID : getUnits()) {
@@ -163,5 +155,21 @@ public class Agent
 		avgY /= countUnits();
 		
 		_centerPoint = new Point(avgX, avgY);
+	}
+	
+	private void updateBaseHP() {
+		_baseHP = _bwapi.getUnit(_base).getHitPoints();
+	}
+
+	public Point getCP() {
+		return _centerPoint;
+	}
+	
+	public int getBaseHP() {
+		return _baseHP;
+	}
+
+	public int getWTA() {
+		return _WTA;
 	}
 }
