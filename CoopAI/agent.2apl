@@ -1,15 +1,18 @@
-/*
- * This is an example model for a new 2APL project
- */
 BeliefUpdates:
 	{true} EnvironmentLoaded() 	{environmentLoaded}
 	{true} Connected()  {connected}
 	{true} GameStarted() {gameStarted}
 	{true} EndGame()	{winGame}
+	{currentIntention(_,X)} AdvanceToNextStage() {currentIntention(_,X+1)}
 Beliefs:
 	count(0).
+	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
+	currentGoal(attack,7).
+	//the current intention name and the stage it is in. 1 is the starting stage.
+	currentIntention(attackBuildingCharlie, 1).
 Goals:
-	environmentLoaded
+	environmentLoaded,
+	attack
 	
 PG-rules:
 
@@ -20,6 +23,18 @@ environmentLoaded <- true |
 	EnvironmentLoaded()
 }
 
+attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1)|
+{
+	attackMoveToBuilding(Charlie);
+	AdvanceToNextStage();
+	skip
+} 
+
+
+
+
+
+
 winGame <- true |
 {
 	print(defeatEnemy);
@@ -29,7 +44,23 @@ winGame <- true |
 
 PC-rules:		
     
+    
+    
+    attackMoveToBuilding(Name) <- building(Name, X, Y, HP) |
+    {
+    	//@Starcraft.moveto(x,Y)
+    	skip
+    }
+    
     %Note the use of a function with parameter as events, since functions with no parameters are not supported.
+	
+	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2)
+	{
+		AdvanceToNextStage();
+	}
+	
+	
+	
 	event(connected(_),starcraft) <- true |
 	{
 		adopta(gameStarted);
