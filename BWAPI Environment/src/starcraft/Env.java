@@ -31,7 +31,7 @@ public class Env extends apapl.Environment
 	private Thread _clientThread;
 	private CoopEventListener _listener;
 	
-	// ------------------------------------------ CONSTRUCTORS ----------------------------
+	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
 	public Env()
 	{
@@ -39,7 +39,7 @@ public class Env extends apapl.Environment
 		_logger.info("Environment Initialised..");
 	}
 	
-	// ------------------------------------------ PRIVATE/PROTECTED METHODS ----------------------------
+	// ------------------------------------------ PRIVATE/PROTECTED METHODS ------------------------
 	
 	/**
 	 * Initializes the environment.
@@ -50,8 +50,9 @@ public class Env extends apapl.Environment
 		_planBases = new HashMap<String,PlanBase>();
 		_agents = new ArrayList<Agent>();
 		
-		_listener = new CoopEventListener(_bwapi, this, _agents);
+		_listener = new CoopEventListener(this, _agents);
 		_bwapi = new BWAPICoop(_listener);
+		_listener.setClient(_bwapi);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 		
@@ -64,66 +65,15 @@ public class Env extends apapl.Environment
 			_clientThread.start();
 	}
 	
-	/**
-	 * Get the agent object using a String
-	 * @param agentName
-	 * @return
-	 */
-	public Agent getAgent( String agentName )
-	{
-		for( Agent agent : _agents )
-		{
-			if( agent.getName().equals( agentName ) )
-				return agent;
+	private APLList intListToAPLList(List<Integer> unitIds) {
+		LinkedList<Term> aplIds = new LinkedList<Term>();
+		
+		for (Integer id : unitIds) {
+			aplIds.add(new APLNum(id));
 		}
 		
-		return null;
+		return new APLList(aplIds);
 	}
-	
-	/**
-	 * Get the agent of a specific unit
-	 * @param unit
-	 * @return
-	 */
-	public Agent getAgent( Integer unit )
-	{
-		for( Agent agent : _agents )
-		{
-			//_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
-			
-			if( agent.getUnits().contains( unit ) || agent.getBuildings().contains(unit))
-			{
-				//_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
-				return agent;
-			}
-		}
-		
-		//_logger.info( "No agent found for " + unit );
-		return null;
-	}
-	
-	/**
-	 * Added a public version of throwEvent so that the eventlistener can use it
-	 * @param agName
-	 * @param f
-	 */
-	public void throwEvent(APLFunction f, String agName) {
-		super.throwEvent(f, agName);
-	}
-	
-	public void throwEventToAll(String name)
-	{
-		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
-		APLFunction event = new APLFunction(name, new APLIdent("true"));
-		String[] agNames = getAgentNames();
-		super.throwEvent(event, agNames);
-	}
-	
-	public void throwEventToAll( APLFunction event )
-    {
-            String[] agNames = getAgentNames();
-            super.throwEvent(event, agNames);
-    }
 	
 	private String[] getAgentNames() 
 	{
@@ -135,7 +85,7 @@ public class Env extends apapl.Environment
 		return s;
 	}
 	
-	// ------------------------------------------ PUBLIC 2APL METHODS  ----------------------------
+	// ------------------------------------------ PUBLIC 2APL METHODS  -----------------------------
 	
 	public synchronized Term hello(String agentName) throws Exception
 	{
@@ -190,16 +140,6 @@ public class Env extends apapl.Environment
 		unitIds = unitIds.subList(0, (num>unitIds.size())?unitIds.size():num);
 
 		return intListToAPLList(unitIds);
-	}
-	
-	public synchronized APLList intListToAPLList(List<Integer> unitIds) {
-		LinkedList<Term> aplIds = new LinkedList<Term>();
-		
-		for (Integer id : unitIds) {
-			aplIds.add(new APLNum(id));
-		}
-		
-		return new APLList(aplIds);
 	}
 	
 	/**
@@ -277,25 +217,7 @@ public class Env extends apapl.Environment
 		
 		return intListToAPLList(list);
 	}
-	
-//	/**
-//	 * Select all the units currently under attack
-//	 * @param agentName
-//	 * @return
-//	 * @throws Exception
-//	 */
-//	public synchronized Term selectUnderAttack( String agentName ) throws Exception
-//	{
-//		Agent agent = this.getAgent( agentName );
-//		
-//		for( Unit unit : agent.getUnits() )
-//		{
-//			
-//		}
-//		
-//		return wrapBoolean( false );
-//	}
-	
+		
 	/* Test method for logging*/
 	public synchronized Term log(String agentName,APLIdent var)
 	{
@@ -342,8 +264,71 @@ public class Env extends apapl.Environment
 		planbase.insertFirst( new Attack(IDsAsInt, enemies) );
 		return wrapBoolean(true);
 	}
+		
+	// ------------------------------------------ PUBLIC NOT-2APL METHODS ------------------------
 	
-	// ------------------------------------------ PUBLIC STATIC METHODS ----------------------------
+	/**
+	 * Get the agent object using a String
+	 * @param agentName
+	 * @return
+	 */
+	public Agent getAgent( String agentName )
+	{
+		for( Agent agent : _agents )
+		{
+			if( agent.getName().equals( agentName ) )
+				return agent;
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Get the agent of a specific unit
+	 * @param unit
+	 * @return
+	 */
+	public Agent getAgent( Integer unit )
+	{
+		for( Agent agent : _agents )
+		{
+			//_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
+			
+			if( agent.getUnits().contains( unit ) || (agent.getBuilding() == unit))
+			{
+				//_logger.info( "Found agent " + agent.getName() + " for unit: " + unit );
+				return agent;
+			}
+		}
+		
+		//_logger.info( "No agent found for " + unit );
+		return null;
+	}
+	
+	/**
+	 * Added a public version of throwEvent so that the eventlistener can use it
+	 * @param agName
+	 * @param f
+	 */
+	public void throwEvent(APLFunction f, String agName) {
+		super.throwEvent(f, agName);
+	}
+	
+	public void throwEventToAll(String name)
+	{
+		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
+		APLFunction event = new APLFunction(name, new APLIdent("true"));
+		String[] agNames = getAgentNames();
+		super.throwEvent(event, agNames);
+	}
+	
+	public void throwEventToAll( APLFunction event )
+    {
+            String[] agNames = getAgentNames();
+            super.throwEvent(event, agNames);
+    }
+	
+	// ------------------------------------------ PUBLIC STATIC NON-2APL METHODS -----------------
 	
 	public static APLListVar wrapBoolean( boolean b )
 	{
