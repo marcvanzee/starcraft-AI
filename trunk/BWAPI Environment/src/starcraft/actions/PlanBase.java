@@ -1,5 +1,7 @@
 package starcraft.actions;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
@@ -38,13 +40,18 @@ public class PlanBase
 //		init(unitIds);
 //	}
 	
-	public PlanBase(List<Integer> initialUnitIDs )
+	public PlanBase(Collection<Integer> initialUnitIDs )
 	{
 		int[] unitIds = new int[initialUnitIDs.size()];
-		for(int i=0; i<unitIds.length; i++)
+		Iterator<Integer> iterator = initialUnitIDs.iterator();
+		int i=0;
+		while(iterator.hasNext())
 		{
-			unitIds[i] = initialUnitIDs.get(i);
+			Integer value = iterator.next();
+			unitIds[i] = value;
+			i++;
 		}
+
 		init(unitIds);
 	}
 	

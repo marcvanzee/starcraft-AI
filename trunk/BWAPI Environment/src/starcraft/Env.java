@@ -310,8 +310,16 @@ public class Env extends apapl.Environment
 	 * @param agName
 	 * @param f
 	 */
-	public void throwEvent(APLFunction f, String agName) {
-		super.throwEvent(f, agName);
+	public void throwEvent(APLFunction f, String agName) 
+	{
+		try
+		{
+			super.throwEvent(f, agName);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			System.exit(-1);
+		}
 	}
 	
 	public void throwEventToAll(String name)
@@ -319,13 +327,27 @@ public class Env extends apapl.Environment
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
 		APLFunction event = new APLFunction(name, new APLIdent("true"));
 		String[] agNames = getAgentNames();
-		super.throwEvent(event, agNames);
+		try
+		{
+			super.throwEvent(event, agNames);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			System.exit(-1);
+		}
 	}
 	
 	public void throwEventToAll( APLFunction event )
     {
-            String[] agNames = getAgentNames();
-            super.throwEvent(event, agNames);
+       String[] agNames = getAgentNames();
+       try
+       {
+           super.throwEvent(event, agNames);
+       }catch(Exception e)
+       {
+    	   e.printStackTrace();
+    	   System.exit(-1);
+       }
     }
 	
 	// ------------------------------------------ PUBLIC STATIC NON-2APL METHODS -----------------
