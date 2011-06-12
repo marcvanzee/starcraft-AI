@@ -23,12 +23,15 @@ environmentLoaded <- true |
 	EnvironmentLoaded()
 }
 
-attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1)|
-{
-	attackMoveToBuilding(Charlie);
-	AdvanceToNextStage();
-	skip
-} 
+
+// Plans for intentions.
+
+//attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1)|
+//{
+//	attackMoveToBuilding(Charlie);
+//	AdvanceToNextStage();
+//	skip
+//} 
 
 
 
@@ -48,15 +51,16 @@ PC-rules:
     
     attackMoveToBuilding(Name) <- building(Name, X, Y, HP) |
     {
-    	//@Starcraft.moveto(x,Y)
+    	//@Starcraft.moveto(x,Y);
     	skip
     }
     
     %Note the use of a function with parameter as events, since functions with no parameters are not supported.
 	
-	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2)
+	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2)|
 	{
 		AdvanceToNextStage();
+		skip
 	}
 	
 	
