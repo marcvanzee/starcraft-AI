@@ -2,6 +2,7 @@ package starcraft.actions;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import starcraft.BWAPICoop;
@@ -15,7 +16,7 @@ public class Attack extends Action
 	private Point _targetPosition;
 	private boolean _isPerformedOnce;
 	
-	public Attack(List<Integer> units, int x, int y)
+	public Attack(Collection<Integer> units, int x, int y)
 	{
 		init();
 		_usingUnits.addAll(units);
@@ -23,7 +24,7 @@ public class Attack extends Action
 		_targetPosition.y = y;
 	}
 	
-	public Attack(List<Integer> units, List<Integer> enemies)
+	public Attack(Collection<Integer> units, Collection<Integer> enemies)
 	{
 		init();
 		_usingUnits.addAll(units);
@@ -45,7 +46,7 @@ public class Attack extends Action
 	 * @param onlyIdle
 	 * @return
 	 */
-	public static List<Unit> selectUnits(List<Unit> units, int amount, List<UnitType> withType, boolean onlyIdle)
+	public static List<Unit> selectUnits(Collection<Unit> units, int amount, List<UnitType> withType, boolean onlyIdle)
 	{
 		
 		List<Unit> selectedUnits = new ArrayList<Unit>();

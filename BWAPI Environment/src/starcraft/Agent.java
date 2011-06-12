@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import eisbot.proxy.model.Unit;
+import starcraft.actions.*;
 
 public class Agent 
 {
@@ -16,14 +17,16 @@ public class Agent
 	private int _base, _baseHP;
 	private Point _centerPoint;
 	private BWAPICoop _bwapi;
-	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character
-									// domain [0,10]
+	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character domain [0,10]
+	private PlanBase _planbase;
+	
 	/**
 	 * Constructor
 	 * 
 	 * @param agName	Name of the agent, useful to match it with the BDI agent
 	 */
-	public Agent(String agName, BWAPICoop _bwapi) {
+	public Agent(String agName, BWAPICoop _bwapi) 
+	{
 		this._agName = agName;
 		this._bwapi = _bwapi;
 		this._WTA = new Random().nextInt(11);
@@ -34,7 +37,9 @@ public class Agent
 	 * 
 	 * @param unit
 	 */
-	public void addUnit(int unitID) {
+	public void addUnit(int unitID) 
+	{
+		System.out.println("********** A UNIT GOT ADDED id(" + unitID + ")");
 		_units.add(unitID);
 	}
 	
@@ -54,6 +59,7 @@ public class Agent
 	 */
 	public void removeElement(int id) {
 		_units.remove(id);
+		//Why is base set to -1 Frank? 
 		_base = -1;
 	}
 	
@@ -77,7 +83,8 @@ public class Agent
 	}
 	
 	/**
-	 * Returns a given number of units randomly
+	 * Returns a given number of units randomly??
+	 * How is it random? Frank
 	 * 
 	 * @param numUnits
 	 * @return
@@ -121,7 +128,12 @@ public class Agent
 	/**
 	 * TODO: hier wordt de planbase geinitialiseerd
 	 */
-	public void initPlanBase() {
+	public void initPlanBase() 
+	{
+		_planbase = new PlanBase(_units);
+		//TEST: insert attack action to position 0.0.
+		_planbase.insertFirst(new Attack(_units, 0,0));
+		
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
 		/*
@@ -138,23 +150,50 @@ public class Agent
 	 * - center point of units
 	 * - the health points of the base
 	 */
-	public void update() {
+	public void update() 
+	{
+		System.out.println("executing actions");
+		//First execute actions in planbase.
+		_planbase.executeActions(_bwapi);
+		//then update the belief base. Dont know if order matters.
+		System.out.println("updating CP");
 		updateCP();
+		System.out.println("updating base hp");
 		updateBaseHP();
 	}
 	
-	private void updateCP() {
+	private void updateCP() 
+	{
 		int avgX=0, avgY=0;
+		int numUnitsRetrieved = 0;
 		
-		for (int unitID : getUnits()) {
-			Unit u = _bwapi.getUnit(unitID);
-			avgX += u.getX();
-			avgY += u.getY();
+		for (int unitID : _units) 
+		{
+			Unit u = null;
+			try
+			{
+				u = _bwapi.getUnit(unitID);
+				numUnitsRetrieved++;
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			if(u!=null)
+			{
+				avgX += u.getX();
+				avgY += u.getY();
+			}
+			
 		}
-		avgX /= countUnits();
-		avgY /= countUnits();
-		
+		int totalUnits = countUnits();
+		if(totalUnits > 0)
+		{
+			avgX /= countUnits();
+			avgY /= countUnits();
+		}
 		_centerPoint = new Point(avgX, avgY);
+		System.out.println("Updated CP(" + avgX + "," + avgY + ") numUnitsRetrieved(" + numUnitsRetrieved + ")");
 	}
 	
 	private void updateBaseHP() {

@@ -1,6 +1,7 @@
 package starcraft;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 
 import starcraft.parameters.Grid;
@@ -40,7 +41,8 @@ public class CoopEventListener implements BWAPIEventListener {
 	 * TODO: Agents hebben nu de methode initPlanBase(), hier moet de planbase van elke
 	 * agent nog geinitialiseerd worden.
 	 */
-	private void initPlanBases() {
+	private void initPlanBases() 
+	{
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
 		
@@ -65,7 +67,8 @@ public class CoopEventListener implements BWAPIEventListener {
 		Unit u;
 		APLList base;
 		
-		for (Agent agent : _agents) {
+		for (Agent agent : _agents) 
+		{
 			units = new APLNum(agent.countUnits());
 			wta   = new APLNum(agent.getWTA());
 			u     = _bwapi.getUnit(agent.getBuilding());
@@ -76,22 +79,30 @@ public class CoopEventListener implements BWAPIEventListener {
 		}
 	}
 	
-	private void distributeUnits() {
-		for (Unit unit : _bwapi.getMyUnits()) 
+	private void distributeUnits() 
+	{
+		
+		ArrayList<Unit> myUnits = _bwapi.getMyUnits();
+		
+		System.out.println("*************** Distributin units: i got in total: " + myUnits.size());
+		
+		for (Unit unit : myUnits) 
 		{
 			//_logger.info("In loop");
 			
 			// <Marc> TODO: distribution is not correct, something goes wrong with the
 			// coordinate system. Moreover, buildings are also counted as units! weird....
 			// Temporarily (ugly) fix:
-			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) {
+			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
+			{
 				_agents.get
 						(
 								(unit.getX() < 1000) ?
 								0 : 1
 						)
 						.addUnit(unit.getID());
-			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) {
+			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
+			{
 				_agents.get
 				(
 						(unit.getX() < 1000) ?
@@ -164,12 +175,15 @@ public class CoopEventListener implements BWAPIEventListener {
 	 * 
 	 * there are more center points of enemies possible, which depends on their location
 	 */
-	private void updateAgents() {
+	private void updateAgents() 
+	{
 		System.out.println("Update!");
 		int numEnemies=0, avgX=0, avgY=0;
 		
-		for (Unit enemy : _bwapi.getEnemyUnits()) {
-			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) {
+		for (Unit enemy : _bwapi.getEnemyUnits()) 
+		{
+			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
+			{
 				numEnemies++;
 				avgX += enemy.getX();
 				avgY += enemy.getY();
@@ -180,11 +194,15 @@ public class CoopEventListener implements BWAPIEventListener {
 			avgY /= numEnemies;
 		}
 		
+		System.out.println("Update info 1: enemies(" + numEnemies + ") avgXCP(" + avgX + ")");
+		
 		APLList ownCP;
 		APLNum baseHP, numEnemyUnits;
 		
-		for (Agent agent : _agents) {
+		for (Agent agent : _agents) 
+		{
 			agent.update();
+			System.out.println("agent updated");
 			Point cp = agent.getCP();
 			ownCP = new APLList(new APLNum(cp.x), new APLNum(cp.y));
 			baseHP = new APLNum(agent.getBaseHP());
@@ -193,6 +211,8 @@ public class CoopEventListener implements BWAPIEventListener {
 			APLFunction f = new APLFunction("gameUpdate", ownCP, baseHP, numEnemyUnits, new APLList());
 			throwEvent(f, agent.getName());
 		}
+		
+		System.out.println("Update info 2: enemies(" + numEnemies + ") avgXCP(" + avgX + ")");
 	}
 	
 	// INTERFACE METHODS FOR ENVIRONMENT
@@ -224,7 +244,7 @@ public class CoopEventListener implements BWAPIEventListener {
 		initBWAPI();
 		
 		distributeUnits();
-		//initPlanBases();
+		initPlanBases();
 		
 		// make sure all 2APL agents know the basic facts
 		init2APLAgents();
@@ -232,7 +252,7 @@ public class CoopEventListener implements BWAPIEventListener {
 		// update information
 		updateAgents();
 		
-		_bwapi.enableUserInput();
+
 		System.out.println("ja");
 	}
 	
