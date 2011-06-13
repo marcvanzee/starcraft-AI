@@ -2,7 +2,11 @@ package starcraft;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import starcraft.parameters.Grid;
 import apapl.data.APLFunction;
@@ -15,26 +19,21 @@ import eisbot.proxy.types.UnitType.UnitTypes;
 public class CoopEventListener implements BWAPIEventListener {
 	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
-	
-	private BWAPICoop _bwapi;
 	private Env _env;
-	private List<Agent> _agents;
-
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
 	public CoopEventListener(Env env, List<Agent> agents) {
 		_env = env;
-		_agents = agents;
 	}
 
 	// ------------------------------------------ PRIVATE METHODS ----------------------------------
 	
 	private void initBWAPI() {
-		_bwapi.enableUserInput();
+		_env._bwapi.enableUserInput();
 		System.out.println("Game Started");
 		
 		//Loads the map, use false else starcraft might freeze.
-		_bwapi.loadMapData(false);
+		_env._bwapi.loadMapData(false);
 	}
 
 	/**
@@ -46,7 +45,7 @@ public class CoopEventListener implements BWAPIEventListener {
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
 		
-		for(Agent agent : _agents)
+		for(Agent agent : _env._agents)
 		{
 			agent.initPlanBase();
 			//PlanBase planBase = new PlanBase(agent.getUnits());
@@ -67,11 +66,11 @@ public class CoopEventListener implements BWAPIEventListener {
 		Unit u;
 		APLList base;
 		
-		for (Agent agent : _agents) 
+		for (Agent agent : _env._agents) 
 		{
 			units = new APLNum(agent.countUnits());
 			wta   = new APLNum(agent.getWTA());
-			u     = _bwapi.getUnit(agent.getBuilding());
+			u     = _env._bwapi.getUnit(agent.getBuilding());
 			base  = new APLList(new APLNum(u.getX()), new APLNum(u.getY()));
 			
 			APLFunction f = new APLFunction("gameStarted", wta, units, base);
@@ -82,9 +81,7 @@ public class CoopEventListener implements BWAPIEventListener {
 	private void distributeUnits() 
 	{
 		
-		ArrayList<Unit> myUnits = _bwapi.getMyUnits();
-		
-		System.out.println("*************** Distributin units: i got in total: " + myUnits.size());
+		ArrayList<Unit> myUnits = _env._bwapi.getMyUnits();
 		
 		for (Unit unit : myUnits) 
 		{
@@ -95,7 +92,7 @@ public class CoopEventListener implements BWAPIEventListener {
 			// Temporarily (ugly) fix:
 			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
 			{
-				_agents.get
+				_env._agents.get
 						(
 								(unit.getX() < 1000) ?
 								0 : 1
@@ -103,7 +100,7 @@ public class CoopEventListener implements BWAPIEventListener {
 						.addUnit(unit.getID());
 			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
 			{
-				_agents.get
+				_env._agents.get
 				(
 						(unit.getX() < 1000) ?
 						0 : 1
@@ -116,13 +113,13 @@ public class CoopEventListener implements BWAPIEventListener {
 			// if units are left top, allocate them to the first agent
 			if (getUnitLocation(unit) == Grid.LOC_NW) 
 			{
-				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(0).getName());
-				_agents.get(0).addUnit(unit.getID());
+				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _env._agents.get(0).getName());
+				_env._agents.get(0).addUnit(unit.getID());
 			} 
 			else 
 			{
-				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _agents.get(1).getName());
-				_agents.get(1).addUnit(unit.getID());
+				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _env._agents.get(1).getName());
+				_env._agents.get(1).addUnit(unit.getID());
 			}
 			*/
 		}
@@ -145,10 +142,10 @@ public class CoopEventListener implements BWAPIEventListener {
 		
 		
 		//See info of method getMap(), returns null if loadMapData hasnt been called!
-		if(_bwapi.getMap() != null)
+		if(_env._bwapi.getMap() != null)
 		{	
-			width = _bwapi.getMap().getWalkWidth();
-			height= _bwapi.getMap().getWalkHeight();
+			width = _env._bwapi.getMap().getWalkWidth();
+			height= _env._bwapi.getMap().getWalkHeight();
 			
 		}
 		else
@@ -175,44 +172,39 @@ public class CoopEventListener implements BWAPIEventListener {
 	 * 
 	 * there are more center points of enemies possible, which depends on their location
 	 */
-	private void updateAgents() 
+	private void updateAgents()
 	{
-		System.out.println("Update!");
-		int numEnemies=0, avgX=0, avgY=0;
+		int countEnemies=0,countBuildings=0;
+		Set<APLFunction> enemyBuildings = new HashSet<APLFunction>();
+		Set<APLFunction> enemyUnits = new HashSet<APLFunction>();
+		APLFunction unitCP, baseHP, numEnemies;
 		
-		for (Unit enemy : _bwapi.getEnemyUnits()) 
+		for (Unit enemy : _env._bwapi.getEnemyUnits()) 
 		{
 			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
 			{
-				numEnemies++;
-				avgX += enemy.getX();
-				avgY += enemy.getY();
+				countEnemies++;
+				enemyUnits.add(new APLFunction("unit", new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));
+			} else if (enemy.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
+			{
+				countBuildings++;
+				enemyBuildings.add(enemy);
 			}
 		}
-		if (numEnemies > 0) {
-			avgX /= numEnemies;
-			avgY /= numEnemies;
-		}
-		
-		System.out.println("Update info 1: enemies(" + numEnemies + ") avgXCP(" + avgX + ")");
-		
-		APLList ownCP;
-		APLNum baseHP, numEnemyUnits;
-		
-		for (Agent agent : _agents) 
+
+		for (Agent agent : _env._agents) 
 		{
 			agent.update();
-			System.out.println("agent updated");
 			Point cp = agent.getCP();
-			ownCP = new APLList(new APLNum(cp.x), new APLNum(cp.y));
-			baseHP = new APLNum(agent.getBaseHP());
-			numEnemyUnits = new APLNum(numEnemies);
+			unitCP = new APLFunction("unitCP", new APLNum(cp.x), new APLNum(cp.y));
+			baseHP = new APLFunction("baseHP", new APLNum(agent.getBaseHP()));
+			numEnemies = new APLFunction("numEnemies", new APLNum(countEnemies));
 			
-			APLFunction f = new APLFunction("gameUpdate", ownCP, baseHP, numEnemyUnits, new APLList());
+			gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
+			
+			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, countEnemies, new APLList());
 			throwEvent(f, agent.getName());
 		}
-		
-		System.out.println("Update info 2: enemies(" + numEnemies + ") avgXCP(" + avgX + ")");
 	}
 	
 	// INTERFACE METHODS FOR ENVIRONMENT
@@ -351,10 +343,5 @@ public class CoopEventListener implements BWAPIEventListener {
 	public void unitMorph(int unitID) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	
-	public void setClient(BWAPICoop bwapi) {
-		_bwapi = bwapi;
 	}
 }
