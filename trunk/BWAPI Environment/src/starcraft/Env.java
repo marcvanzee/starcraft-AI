@@ -261,7 +261,7 @@ public class Env extends apapl.Environment
 			IDsAsInt.add( Integer.parseInt( id ) );
 		}
 		
-		planbase.insertFirst( new Attack(IDsAsInt, enemies) );
+		planbase.insertFirst( new Attack("test", IDsAsInt, enemies) );
 		return wrapBoolean(true);
 	}
 		

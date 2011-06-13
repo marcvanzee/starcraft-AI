@@ -1,8 +1,11 @@
 package starcraft.actions;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,20 +28,6 @@ public class PlanBase
 	private HashMap<Integer,Action> _actionsPerID;
 	
 	private int _currentActionId;
-	
-//	/**
-//	 * Constructs a new PlanBase, with empty plans for initial units. 
-//	 * @param initialUnits
-//	 */
-//	public PlanBase(List<Unit> initialUnits)
-//	{
-//		int[] unitIds = new int[initialUnits.size()];
-//		for(int i=0; i<unitIds.length; i++)
-//		{
-//			unitIds[i] = initialUnits.get(i).getID();
-//		}
-//		init(unitIds);
-//	}
 	
 	public PlanBase(Collection<Integer> initialUnitIDs )
 	{
@@ -88,7 +77,6 @@ public class PlanBase
 	{
 		int actionId = _currentActionId;
 		_currentActionId++;
-		
 		
 		_actionsPerID.put(actionId, action);
 		_minimalPlanBase.insertReplace(actionId,action.getInvolvedUnitIds());
@@ -148,12 +136,14 @@ public class PlanBase
 	 * Executes the actions for the units. 
 	 * If an action is finished it is removed from the list of actions for that unit and from the actions list.
 	 * An action is executed each updateCycle till it is finished. 
+	 * Returns a set of all actions that are finished.
 	 */
-	public synchronized void executeActions(BWAPICoop bwapi)
+	public synchronized Set<Action> executeActions(BWAPICoop bwapi)
 	{
 		
 		Set<Integer> actionIds = _minimalPlanBase.getActionsToExecute();
-		List<Integer> finishedActions = new ArrayList<Integer>();
+		Set<Integer> finishedActionIds = new HashSet<Integer>();
+		Set<Action> finishedActions = new HashSet<Action>();
 		
 		for(int actionId : actionIds)
 		{
@@ -163,15 +153,21 @@ public class PlanBase
 			if(action.isFinished(bwapi))
 			{
 				_actionsPerID.remove(actionId);
-				finishedActions.add(actionId);
+				finishedActionIds.add(actionId);
+				finishedActions.add(action);
 			}
 		}
 		//Fit the contents of the finished actions list into an array.
 		int[] actionsFinishedArray = new int[finishedActions.size()];
-		for(int i=0; i<actionsFinishedArray.length; i++)
-			actionsFinishedArray[i] = finishedActions.get(i);		
 		
-		_minimalPlanBase.actionsFinished(actionsFinishedArray);
+		
+		int i=0;
+		for(Integer actionID : finishedActionIds)
+		{
+			actionsFinishedArray[i] = actionID;
+		}
+		
+		return finishedActions;
 	}
 	
 }

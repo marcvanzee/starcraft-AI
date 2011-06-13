@@ -8,20 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import starcraft.actions.Action;
 import starcraft.parameters.Grid;
 import apapl.data.APLFunction;
+import apapl.data.APLIdent;
 import apapl.data.APLList;
 import apapl.data.APLNum;
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.Unit;
 import eisbot.proxy.types.UnitType.UnitTypes;
 
-public class CoopEventListener implements BWAPIEventListener {
+public class CoopEventListener implements BWAPIEventListener 
+{
 	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
 	private Env _env;
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
-	
+	-
 	public CoopEventListener(Env env, List<Agent> agents) {
 		_env = env;
 	}
@@ -61,7 +64,8 @@ public class CoopEventListener implements BWAPIEventListener {
 	 * 
 	 * The following event will be sent to every agent: gameStarted([wta, numUnits, [baseX,baseY] ])
 	 */
-	private void init2APLAgents() {
+	private void init2APLAgents() 
+	{
 		APLNum units, wta;
 		Unit u;
 		APLList base;
@@ -194,7 +198,10 @@ public class CoopEventListener implements BWAPIEventListener {
 
 		for (Agent agent : _env._agents) 
 		{
-			agent.update();
+			Set<Action> finishedActions = agent.update();
+			throwFinishedActionsEvents(finishedActions);
+			
+			
 			Point cp = agent.getCP();
 			unitCP = new APLFunction("unitCP", new APLNum(cp.x), new APLNum(cp.y));
 			baseHP = new APLFunction("baseHP", new APLNum(agent.getBaseHP()));
@@ -204,7 +211,22 @@ public class CoopEventListener implements BWAPIEventListener {
 			
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, countEnemies, new APLList());
 			throwEvent(f, agent.getName());
+			
+			
+			
 		}
+	}
+	
+	
+	public void throwFinishedActionsEvents(Set<Action> finishedActions, String agentName)
+	{
+		for(Action action : finishedActions)
+		{
+			APLIdent actionId = new APLIdent(action.getIdentity());
+			APLFunction function = new APLFunction("actionPerformed", actionId);
+			throwEvent(function, agentName);
+		}
+		
 	}
 	
 	// INTERFACE METHODS FOR ENVIRONMENT
