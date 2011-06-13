@@ -201,7 +201,9 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
-
+			
+			
+			
 			throwFinishedActionsEvents(finishedActions, agentName);
 	
 			Point cp = agent.getCP();
@@ -212,8 +214,9 @@ public class CoopEventListener implements BWAPIEventListener
 			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
 			
 			
-			
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
+			
+			System.out.println("Throwing gameUpdate event" +  f.toString());
 			throwEvent(f, agent.getName());
 			
 			
@@ -228,6 +231,7 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			APLIdent actionId = new APLIdent(action.getIdentity());
 			APLFunction function = new APLFunction("actionPerformed", actionId);
+			System.out.println("Throwing finished action event: " + function.toString());
 			throwEvent(function, agentName);
 		}
 		
@@ -267,8 +271,9 @@ public class CoopEventListener implements BWAPIEventListener
 		// make sure all 2APL agents know the basic facts
 		init2APLAgents();
 		
-		// update information
-		updateAgents();
+		// update informatio
+		//updateAgents();
+		
 		
 
 		System.out.println("ja");
