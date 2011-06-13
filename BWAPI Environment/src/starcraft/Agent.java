@@ -155,7 +155,7 @@ public class Agent
 	{
 		//System.out.println("executing actions");
 		//First execute actions in planbase.
-		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
+		//Set<Action> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
 		//then update the belief base. Dont know if order matters.
@@ -164,7 +164,7 @@ public class Agent
 		//System.out.println("updating base hp");
 		updateBaseHP();
 		
-		return finishedActions;
+		return new HashSet<Action>();//finishedActions;
 	}
 	
 	private void updateCP() 
@@ -198,7 +198,7 @@ public class Agent
 			avgY /= countUnits();
 		}
 		_centerPoint = new Point(avgX, avgY);
-		System.out.println("Updated CP(" + avgX + "," + avgY + ") numUnitsRetrieved(" + numUnitsRetrieved + ")");
+		//System.out.println("Updated CP(" + avgX + "," + avgY + ") numUnitsRetrieved(" + numUnitsRetrieved + ")");
 	}
 	
 	private void updateBaseHP() {

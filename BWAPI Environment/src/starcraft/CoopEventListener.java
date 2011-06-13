@@ -2,10 +2,7 @@ package starcraft;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import starcraft.actions.Action;
@@ -23,7 +20,11 @@ public class CoopEventListener implements BWAPIEventListener
 {
 	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
+	private static final int UPDATE_FREQ = 5;
 	private Env _env;
+	private volatile boolean _gameStarted = false;
+	private int _counter = 0;
+	
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
 	public CoopEventListener(Env env, List<Agent> agents) {
@@ -182,7 +183,8 @@ public class CoopEventListener implements BWAPIEventListener
 		int countEnemies=0,countBuildings=0;
 		ArrayList<Term> enemyBuildings = new ArrayList<Term>();
 		ArrayList<Term> enemyUnits = new ArrayList<Term>();
-		APLFunction unitCP, baseHP, numEnemies;
+		APLFunction baseHP, numEnemies;
+		APLList unitCP;
 		
 		for (Unit enemy : _env._bwapi.getEnemyUnits()) 
 		{
@@ -201,26 +203,21 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
-			
-			
-			
+
 			throwFinishedActionsEvents(finishedActions, agentName);
 	
 			Point cp = agent.getCP();
-			unitCP = new APLFunction("unitCP", new APLNum(cp.x), new APLNum(cp.y));
-			baseHP = new APLFunction("baseHP", new APLNum(agent.getBaseHP()));
+			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
+			unitCP = new APLList(new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
+			baseHP = new APLNum(agent.getBaseHP());
 			numEnemies = new APLFunction("numEnemies", new APLNum(countEnemies));
 			
 			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
-			
-			
+
 			APLFunction f = new APLFunction("gameUpdate", unitCP);//, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
 			
 			System.out.println("Throwing gameUpdate event" +  f.toString());
 			throwEvent(f, agent.getName());
-			
-			
-			
 		}
 	}
 	
@@ -231,8 +228,7 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			APLIdent actionId = new APLIdent(action.getIdentity());
 			APLFunction function = new APLFunction("actionPerformed", actionId);
-			System.out.println("Throwing finished action event: " + function.toString());
-			throwEvent(function, agentName);
+			//throwEvent(function, agentName);
 		}
 		
 	}
@@ -271,20 +267,25 @@ public class CoopEventListener implements BWAPIEventListener
 		// make sure all 2APL agents know the basic facts
 		init2APLAgents();
 		
-		// update informatio
-		//updateAgents();
+		// update information
+		updateAgents();
 		
-		
-
-		System.out.println("ja");
+		_gameStarted = true;
 	}
 	
 	@Override
 	public void gameUpdate()
 	{
-		updateAgents();
+		if (_gameStarted) {
+			if (_counter == UPDATE_FREQ) {
+				updateAgents();
+				_counter=0;
+			} else {
+				_counter++;
+			}
+		} 
 	}
-
+	
 	@Override
 	public void gameEnded() 
 	{
