@@ -8,6 +8,8 @@ public abstract class Action
 	
 	public Action(String identifier)
 	{
+		if(identifier == null)
+			_identifier = "";
 		_identifier = identifier;
 	}
 	
