@@ -214,7 +214,7 @@ public class CoopEventListener implements BWAPIEventListener
 			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
 			
 			
-			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
+			APLFunction f = new APLFunction("gameUpdate", unitCP);//, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
 			
 			System.out.println("Throwing gameUpdate event" +  f.toString());
 			throwEvent(f, agent.getName());
