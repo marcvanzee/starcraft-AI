@@ -16,16 +16,18 @@ public class Attack extends Action
 	private Point _targetPosition;
 	private boolean _isPerformedOnce;
 	
-	public Attack(Collection<Integer> units, int x, int y)
+	public Attack(String identifier, Collection<Integer> units, int x, int y)
 	{
+		super(identifier);
 		init();
 		_usingUnits.addAll(units);
 		_targetPosition.x = x;
 		_targetPosition.y = y;
 	}
 	
-	public Attack(Collection<Integer> units, Collection<Integer> enemies)
+	public Attack(String identifier, Collection<Integer> units, Collection<Integer> enemies)
 	{
+		super(identifier);
 		init();
 		_usingUnits.addAll(units);
 		_targetEnemies.addAll(enemies);

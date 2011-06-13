@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -46,11 +47,7 @@ public class MinimalPlanBase
 			}
 		}
 		
-		//System.out.println("beforeShift");
-		//System.out.println(this);
 		shift(0);
-		//System.out.println("afterShift");
-		//System.out.println(this);
 	}
 	
 	/**
@@ -79,11 +76,7 @@ public class MinimalPlanBase
 			}
 			firstMap = false;
 		}
-		//System.out.println("beforeShift");
-		//System.out.println(this);
 		shift(0);
-		//System.out.println("afterShift");
-		//System.out.println(this);
 	}
 	
 	/**
@@ -112,11 +105,7 @@ public class MinimalPlanBase
 		//adds the list at the beginning of the map.
 		_planBase.add(0, first);
 		
-		//System.out.println("beforeShift");
-		//System.out.println(this);
 		shift(0);
-		//System.out.println("afterShift");
-		//System.out.println(this);
 	}
 	
 	/**
@@ -182,8 +171,11 @@ public class MinimalPlanBase
 		return actions;
 	}
 	
-	public synchronized void actionsFinished(int... actionIds)
+	public synchronized Map<Integer,Integer> actionsFinished(int... actionIds)
 	{
+		Map<Integer,Integer> actionPerUnit = new HashMap<Integer,Integer>();
+		
+		
 		if(_planBase.size() > 0)
 		{
 			for(int actionId : actionIds)
@@ -191,11 +183,15 @@ public class MinimalPlanBase
 				for(Entry<Integer,Integer> entry : _planBase.get(0).entrySet())
 				{
 					if(entry.getValue() == actionId)
+					{	
 						entry.setValue(0);
+						actionPerUnit.put(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		}
 		shift(0);
+		return actionPerUnit;
 	}
 	
 	/**
@@ -289,14 +285,14 @@ public class MinimalPlanBase
 		
 		MinimalPlanBase a = new MinimalPlanBase(1,2,3,4,5);
 		a.insertFirst(1, 1,2,3);
-		//System.out.println(a);
+		System.out.println(a);
 		a.insertFirst(2, 1,4,5);
-		//System.out.println(a);
+		System.out.println(a);
 		a.insertFirst(3, 2,3);
 		
-		//System.out.println("action finsiehd 3");
+		System.out.println("action finsiehd 3");
 		a.actionsFinished(3);
-		//System.out.println(a);
+		System.out.println(a);
 		a.insertFirst(4, 1,3,5);
 		//
 		a.insertLast(5, 4,5);
