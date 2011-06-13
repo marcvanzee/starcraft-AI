@@ -264,6 +264,28 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 		
+	
+	/**
+	 * Broadcast the teammates to all the agents
+	 * @author Roemer Vlasveld
+	 */
+	public void broadcastTeammates()
+	{
+		LinkedList<Term> list = new LinkedList<Term>();
+		
+		for( Agent agent : _agents )
+		{
+			for( Agent agent2 : _agents )
+			{
+				if( agent.getName() != agent2.getName() )
+					this.throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
+			}
+		}
+		
+	}
+	
+	
+	
 	// ------------------------------------------ PUBLIC NOT-2APL METHODS ------------------------
 	
 	/**

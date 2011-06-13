@@ -17,7 +17,8 @@ public class Agent
 	private int _base, _baseHP;
 	private Point _centerPoint;
 	private BWAPICoop _bwapi;
-	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character domain [0,10]
+//	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character domain [0,10]
+	private float _WTA;
 	private PlanBase _planbase;
 	
 	/**
@@ -29,7 +30,7 @@ public class Agent
 	{
 		this._agName = agName;
 		this._bwapi = _bwapi;
-		this._WTA = new Random().nextInt(11);
+		this._WTA = new Random().nextFloat(); // nextInt(11);
 	}
 	
 	/**
@@ -212,7 +213,7 @@ public class Agent
 		return _baseHP;
 	}
 
-	public int getWTA() {
+	public float getWTA() {
 		return _WTA;
 	}
 }

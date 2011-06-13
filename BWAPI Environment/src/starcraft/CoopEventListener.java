@@ -294,6 +294,7 @@ public class CoopEventListener implements BWAPIEventListener
 	public void connected() 
 	{
 		throwEventToAll("connected");
+		_env.broadcastTeammates();
 	}
 	
 	@Override
