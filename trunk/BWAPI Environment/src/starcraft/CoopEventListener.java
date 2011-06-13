@@ -2,6 +2,7 @@ package starcraft;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -181,9 +182,9 @@ public class CoopEventListener implements BWAPIEventListener
 	private void updateAgents()
 	{
 		int countEnemies=0,countBuildings=0;
-		ArrayList<Term> enemyBuildings = new ArrayList<Term>();
-		ArrayList<Term> enemyUnits = new ArrayList<Term>();
-		APLFunction baseHP, numEnemies;
+		LinkedList<Term> enemyBuildings = new LinkedList<Term>();
+		LinkedList<Term> enemyUnits = new LinkedList<Term>();
+		APLNum baseHP, numEnemies;
 		APLList unitCP;
 		
 		for (Unit enemy : _env._bwapi.getEnemyUnits()) 
@@ -210,11 +211,11 @@ public class CoopEventListener implements BWAPIEventListener
 			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
 			unitCP = new APLList(new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
 			baseHP = new APLNum(agent.getBaseHP());
-			numEnemies = new APLFunction("numEnemies", new APLNum(countEnemies));
+			numEnemies = new APLNum(countEnemies);
 			
-			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
+			//gameUpdate([unitCPx,unitCPy],HP,numEnemies,[[enemy1x,enemy1y,enemy1HP],[enemy2x,enemy2y,enemy2HP],...],[[enemyBuilding1x,enemyBuilding1y,enemyBuildingHP],[enemyBuilding2x,enemyBuilding2y,enemyBuildingHP],...]
 
-			APLFunction f = new APLFunction("gameUpdate", unitCP);//, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
+			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLList(enemyUnits), new APLList(enemyBuildings));
 			
 			System.out.println("Throwing gameUpdate event" +  f.toString());
 			throwEvent(f, agent.getName());
