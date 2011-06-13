@@ -3,16 +3,33 @@ BeliefUpdates:
 	{true} Connected()  {connected}
 	{true} GameStarted() {gameStarted}
 	{true} EndGame()	{winGame}
-	{currentIntention(_,X)} AdvanceToNextStage() {currentIntention(_,X+1)}
+	{currentIntention(_,X,Y)} AdvanceToNextStage() {currentIntention(_,X+1,Y)}
+	{true} NewTeamMate(X) {teammates(X)}
+	{wta(X)} SetWta(Y) {not wta(X), wta(Y)}
+	{currentIntention( X1, Y1, Z1 )} SetCurrentIntention(X2,Y2,Z2) {
+		not currentIntention( X1, Y1, Z1 ),
+		currentIntention( X2,Y2,Z2) }
 Beliefs:
 	count(0).
 	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
 	currentGoal(attack,7).
 	//the current intention name and the stage it is in. 1 is the starting stage.
-	currentIntention(attackBuildingCharlie, 1).
+	//currentIntention(attackBuildingCharlie, 1).
+	// Roemer: included priority
+	currentIntention(attackBuildingCharlie, 1, 0.5).	
+	wta(0).
+	prob(P) :- is(X, rand), X < P.
+	
+	
+	
+	planParent( attackBuilding, attack ).
+	planParent( explore, attack ).
+	planParent( defendBuilding, defend ).
+	
+	
 Goals:
-	environmentLoaded,
-	attack
+	environmentLoaded
+	//,attack
 	
 PG-rules:
 
@@ -26,7 +43,7 @@ environmentLoaded <- true |
 
 // Plans for intentions.
 
-//attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1)|
+//attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1, X)|
 //{
 //	attackMoveToBuilding(Charlie);
 //	AdvanceToNextStage();
@@ -57,7 +74,7 @@ PC-rules:
     
     %Note the use of a function with parameter as events, since functions with no parameters are not supported.
 	
-	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2)|
+	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2, X)|
 	{
 		AdvanceToNextStage();
 		skip
@@ -73,9 +90,16 @@ PC-rules:
 		skip
 	}
 	
-	event(gameStarted(_),starcraft) <- true |
+	event(gameStarted( Wta, Units, BaseLocation ),starcraft) <- true |
 	{
+		SetWta( Wta );
 		adopta(winGame);
+		
+		if B( Wta > 0.5 ) then	// or: if B( prob( Wta ) ) then....
+		{ adopta( attack ) }
+		else
+		{ adopta( defend ) };
+		
 		GameStarted();
 		print(gamestarted);
 		skip
@@ -96,6 +120,12 @@ PC-rules:
 		
 		skip
 	}
+	
+	event( teamMate(teammate), starcraft ) <- true |
+	{
+		NewTeamMate( teammate );
+		skip
+	}
 		
 	event( X, _) <- true |
 	{
@@ -105,4 +135,68 @@ PC-rules:
 	
 	
 	
+// PC-rules for negotiaton
+
+	// Teammate makes attack-proposal but now defending, so don't obey
+	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
+		currentIntention( CurrentIntention, _, _ ) and 
+		planParent( CurrentIntention, defend ) and 
+		planParent( ProposalPlan, attack ) |
+	{
+		// ignore request
+		print(ignoreBecauseDefend);
+		informIgnoreJointPlan( TeamMate, ProposalPlan );
+		skip
+	}
+	
+	// Teammate makes attack-proposal and now attacking, so check priority
+	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
+		currentIntention( CurrentIntention, _, Priority2 ) and 
+		planParent( CurrentIntention, attack ) and 
+		planParent( ProposalPlan, _ ) |
+	{
+		if B( Priority >= Priority2 ) then
+		{
+			// obey request
+			print(obey);
+			dropgoal( attack );
+			adoptParentPlanOf( ProposalPlan );
+			SetCurrentIntention( ProposalPlan, 1, Priority );
+			informObeyJointPlan( TeamMate, ProposalPlan );
+			skip
+		}
+		else
+		{
+			// ignore request
+			print(ignoreBecausePriority);
+			informIgnoreJointPlan( TeamMate, ProposalPlan );
+			skip
+		};
+		skip
+	}
+
+	// helping method to adopt plan (adopta doesn't accept vars )
+	adoptParentPlanOf( Plan ) <- planParent( Plan, attack ) |
+	{ adopta( attack )}
+	
+	adoptParentPlanOf( Plan ) <- planParent( Plan, defend ) |
+	{ adopta( defend )}
+	
+	adoptParentPlanOf( Plan ) <- true |
+	{ print(unknownPlanParent(Plan)) }
+
+	
+	// reply to proposal negative
+	informIgnoreJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, ignoreJointPlan( ProposalPlan ) );
+		skip
+	}
+	
+	// reply to proposal positive
+	informObeyJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, obeyJointPlan( ProposalPlan ) );
+		skip
+	}
 	
