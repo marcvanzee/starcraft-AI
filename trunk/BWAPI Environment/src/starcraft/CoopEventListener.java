@@ -14,6 +14,7 @@ import apapl.data.APLFunction;
 import apapl.data.APLIdent;
 import apapl.data.APLList;
 import apapl.data.APLNum;
+import apapl.data.Term;
 import eisbot.proxy.BWAPIEventListener;
 import eisbot.proxy.model.Unit;
 import eisbot.proxy.types.UnitType.UnitTypes;
@@ -24,7 +25,7 @@ public class CoopEventListener implements BWAPIEventListener
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
 	private Env _env;
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
-	-
+	
 	public CoopEventListener(Env env, List<Agent> agents) {
 		_env = env;
 	}
@@ -179,8 +180,8 @@ public class CoopEventListener implements BWAPIEventListener
 	private void updateAgents()
 	{
 		int countEnemies=0,countBuildings=0;
-		Set<APLFunction> enemyBuildings = new HashSet<APLFunction>();
-		Set<APLFunction> enemyUnits = new HashSet<APLFunction>();
+		ArrayList<Term> enemyBuildings = new ArrayList<Term>();
+		ArrayList<Term> enemyUnits = new ArrayList<Term>();
 		APLFunction unitCP, baseHP, numEnemies;
 		
 		for (Unit enemy : _env._bwapi.getEnemyUnits()) 
@@ -192,14 +193,14 @@ public class CoopEventListener implements BWAPIEventListener
 			} else if (enemy.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
 			{
 				countBuildings++;
-				enemyBuildings.add(enemy);
+				enemyBuildings.add(new APLFunction("building", new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
 			}
 		}
 
 		for (Agent agent : _env._agents) 
 		{
 			Set<Action> finishedActions = agent.update();
-			throwFinishedActionsEvents(finishedActions);
+			//throwFinishedActionsEvents(finishedActions);
 			
 			
 			Point cp = agent.getCP();
@@ -207,9 +208,9 @@ public class CoopEventListener implements BWAPIEventListener
 			baseHP = new APLFunction("baseHP", new APLNum(agent.getBaseHP()));
 			numEnemies = new APLFunction("numEnemies", new APLNum(countEnemies));
 			
-			gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
+			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
 			
-			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, countEnemies, new APLList());
+			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
 			throwEvent(f, agent.getName());
 			
 			

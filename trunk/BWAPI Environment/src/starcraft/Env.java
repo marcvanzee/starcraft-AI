@@ -22,12 +22,12 @@ public class Env extends apapl.Environment
 	
 	private static final int TOTAL_AGENTS = 2;
 
-	private List<Agent> _agents;
+	public List<Agent> _agents;
 	private HashMap<String,PlanBase> _planBases;
 	
 	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
-	 
-	private BWAPICoop _bwapi;
+	
+	public BWAPICoop _bwapi;
 	private Thread _clientThread;
 	private CoopEventListener _listener;
 	
@@ -52,7 +52,6 @@ public class Env extends apapl.Environment
 		
 		_listener = new CoopEventListener(this, _agents);
 		_bwapi = new BWAPICoop(_listener);
-		_listener.setClient(_bwapi);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
 		
