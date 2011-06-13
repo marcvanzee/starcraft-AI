@@ -48,9 +48,9 @@ import eisbot.proxy.types.WeaponType;
 public class JNIBWAPI {
         
         // load the BWAPI client library
-	static {
+	{
 		System.loadLibrary("ExampleAIClient");
-    }
+	}
         
     /** callback listener for BWAPI events */
     private BWAPIEventListener listener;

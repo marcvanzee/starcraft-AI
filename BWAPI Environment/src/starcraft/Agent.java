@@ -152,15 +152,15 @@ public class Agent
 	 */
 	public Set<Action> update() 
 	{
-		System.out.println("executing actions");
+		//System.out.println("executing actions");
 		//First execute actions in planbase.
 		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
 		//then update the belief base. Dont know if order matters.
-		System.out.println("updating CP");
+		//System.out.println("updating CP");
 		updateCP();
-		System.out.println("updating base hp");
+		//System.out.println("updating base hp");
 		updateBaseHP();
 		
 		return finishedActions;
