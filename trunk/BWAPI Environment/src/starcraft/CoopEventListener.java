@@ -199,16 +199,19 @@ public class CoopEventListener implements BWAPIEventListener
 
 		for (Agent agent : _env._agents) 
 		{
+			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
-			//throwFinishedActionsEvents(finishedActions);
-			
-			
+
+			throwFinishedActionsEvents(finishedActions, agentName);
+	
 			Point cp = agent.getCP();
 			unitCP = new APLFunction("unitCP", new APLNum(cp.x), new APLNum(cp.y));
 			baseHP = new APLFunction("baseHP", new APLNum(agent.getBaseHP()));
 			numEnemies = new APLFunction("numEnemies", new APLNum(countEnemies));
 			
 			//gameUpdate(unitCP(x,y),baseHP(HP),numEnemies(N),enemyUnits([unit(x1,y1,HP1],unit(x2,y2,HP2)]),enemyBuildings([building(x1,y1,HP1),building(x2,y2,HP2)]))
+			
+			
 			
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLFunction("enemyUnits", enemyUnits), new APLFunction("enemyBuildings", enemyBuildings));
 			throwEvent(f, agent.getName());

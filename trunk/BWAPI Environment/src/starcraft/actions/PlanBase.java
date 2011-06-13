@@ -158,7 +158,7 @@ public class PlanBase
 			}
 		}
 		//Fit the contents of the finished actions list into an array.
-		int[] actionsFinishedArray = new int[finishedActions.size()];
+		int[] actionsFinishedArray = new int[finishedActionIds.size()];
 		
 		
 		int i=0;
