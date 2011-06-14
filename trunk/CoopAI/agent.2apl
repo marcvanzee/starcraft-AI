@@ -3,13 +3,28 @@ BeliefUpdates:
 	{true} Connected()  {connected}
 	{true} GameStarted() {gameStarted}
 	{true} EndGame()	{winGame}
+	
+		{centerPoint(A,B) and baseHP(C) and numEnemies(D) and enemyUnits(E) and enemyBuildings(F)}
+	GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings)
+		{not centerPoint(A,B), not baseHP(C), not numEnemies(D), not enemyUnits(E), not enemyBuildings(F), centerPoint(CPX,CPY), baseHP(BaseHP), numEnemies(NumEnemies), enemyUnits(EnemyUnits), enemyBuildings(EnemyBuildings)}
+	
 	{currentIntention(_,X,Y)} AdvanceToNextStage() {currentIntention(_,X+1,Y)}
+		
 	{true} NewTeamMate(X) {teammates(X)}
+		
 	{wta(X)} SetWta(Y) {not wta(X), wta(Y)}
-	{currentIntention( X1, Y1, Z1 )} SetCurrentIntention(X2,Y2,Z2) {
-		not currentIntention( X1, Y1, Z1 ),
-		currentIntention( X2,Y2,Z2) }
+	
+	{currentIntention( X1, Y1, Z1 )} SetCurrentIntention(X2,Y2,Z2) {not currentIntention( X1, Y1, Z1 ),currentIntention( X2,Y2,Z2)}
+
 Beliefs:
+	//initial values
+	centerPoint(0,0).
+	baseHP(0).
+	numEnemies(0).
+	enemyUnits(0).
+	enemyBuildings(0).
+
+
 	count(0).
 	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
 	currentGoal(attack,7).
@@ -42,17 +57,13 @@ environmentLoaded <- true |
 
 
 // Plans for intentions.
-
-//attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1, X)|
-//{
-//	attackMoveToBuilding(Charlie);
-//	AdvanceToNextStage();
-//	skip
-//} 
-
-
-
-
+//attack <- currentGoal(attack,P) and currentIntention(attackBuildingCharlie, 1, X) |
+attack <- true | 
+{
+	attackMoveToBuilding(charlie);
+	AdvanceToNextStage();
+	skip
+} 
 
 
 winGame <- true |
@@ -66,6 +77,8 @@ PC-rules:
     
     
     
+    
+    
     attackMoveToBuilding(Name) <- building(Name, X, Y, HP) |
     {
     	//@Starcraft.moveto(x,Y);
@@ -73,6 +86,13 @@ PC-rules:
     }
     
     %Note the use of a function with parameter as events, since functions with no parameters are not supported.
+		
+	
+	event(gameUpdate([CPX,CPY], BaseHP, NumEnemies, EnemyUnits, EnemyBuildings), starcraft) <- true |
+	{
+		GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings);
+		skip		
+	}
 	
 	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2, X)|
 	{
