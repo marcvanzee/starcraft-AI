@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import starcraft.actions.Attack;
 import starcraft.actions.PlanBase;
 import eisbot.proxy.model.*;
+import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
 import apapl.data.APLList;
@@ -21,9 +22,11 @@ public class Env extends apapl.Environment
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
 	
 	private static final int TOTAL_AGENTS = 2;
-
-	public List<Agent> _agents;
-	private HashMap<String,PlanBase> _planBases;
+	
+	//Hashmap of agents with their name as key.
+	public HashMap<String, Agent> _agents;
+	
+	//private HashMap<String,PlanBase> _planBases;
 	
 	private Logger _logger = Logger.getLogger("Starcraft."+Env.class.getName());
 	
@@ -47,10 +50,9 @@ public class Env extends apapl.Environment
 	private void init()
 	{
 		//int[] locations = {BWAPICoop.LOC_NE, BWAPICoop.LOC_NW};
-		_planBases = new HashMap<String,PlanBase>();
-		_agents = new ArrayList<Agent>();
+		_agents = new HashMap<String,Agent>();
 		
-		_listener = new CoopEventListener(this, _agents);
+		_listener = new CoopEventListener(this);
 		_bwapi = new BWAPICoop(_listener);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
 	}
@@ -86,16 +88,16 @@ public class Env extends apapl.Environment
 	
 	// ------------------------------------------ PUBLIC 2APL METHODS  -----------------------------
 	
-	public synchronized Term hello(String agentName) throws Exception
+	public synchronized Term hello(String agentName) throws ExternalActionFailedException
 	{
 		if (_agents.size() < TOTAL_AGENTS) {
 			_logger.info(agentName + " registered");
-			_agents.add(new Agent(agentName, _bwapi));
+			_agents.put(agentName, new Agent(agentName,_bwapi));
 			if (_agents.size() == TOTAL_AGENTS) {
 				start();
 			}
 		} else {
-			throw new Exception("env> ERROR: too many agents try to register");
+			throw new ExternalActionFailedException("env> ERROR: too many agents try to register");
 		}
 		_logger.info("returning " + agentName);
 		
@@ -109,7 +111,7 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectUnits( String agentName, int num ) throws Exception
+	public synchronized Term selectUnits( String agentName, int num ) throws ExternalActionFailedException
 	{
 		List<Integer> unitIds = getAgent(agentName).getUnits(num);
 		
@@ -123,7 +125,7 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectIdle( String agentName, int num ) throws Exception
+	public synchronized Term selectIdle( String agentName, int num ) throws ExternalActionFailedException
 	{
 		// receive all units, then filter out the non-idle ones and finally limit number
 		// of units to <num>
@@ -148,7 +150,7 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectIdle( String agentName, APLList units ) throws Exception
+	public synchronized Term selectIdle( String agentName, APLList units ) throws ExternalActionFailedException
 	{
 		LinkedList<Term> list = units.toLinkedList();
 
@@ -168,7 +170,7 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectRange( String agentName, Point position, int radius ) throws Exception
+	public synchronized Term selectRange( String agentName, Point position, int radius ) throws ExternalActionFailedException
 	{
 		LinkedList<Term> list = new LinkedList<Term>();
 		
@@ -190,7 +192,7 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term selectAll( String agentName ) throws Exception
+	public synchronized Term selectAll( String agentName ) throws ExternalActionFailedException
 	{
 //		Unit enemy = new Unit( enemyID.toInt() );		
 //		LinkedList<Integer> enemies = new LinkedList<Integer>();
@@ -218,14 +220,14 @@ public class Env extends apapl.Environment
 	}
 		
 	/* Test method for logging*/
-	public synchronized Term log(String agentName,APLIdent var)
+	public synchronized Term log(String agentName,APLIdent var) throws ExternalActionFailedException
 	{
 		_logger.info(agentName + ":" + var.toString());
 		return wrapBoolean(true);
 	}
 	   
 	/* Test method for waiting */
-	public synchronized Term wait( String agentName, APLNum time )
+	public synchronized Term wait( String agentName, APLNum time ) throws ExternalActionFailedException
 	{
 		try {
 			Thread.sleep( time.toInt() );
@@ -242,7 +244,8 @@ public class Env extends apapl.Environment
 	 * @return
 	 * @throws Exception
 	 */
-	public synchronized Term attackUnit( String agentName, APLList unitIDs, APLNum enemyID ) throws Exception
+	/*
+	public synchronized Term attackUnit( String agentName, String actionIdentifier, APLList unitIDs, APLNum enemyID ) throws Exception
 	{
 		Unit enemy = new Unit( enemyID.toInt() );		
 		LinkedList<Integer> enemies = new LinkedList<Integer>();
@@ -250,7 +253,7 @@ public class Env extends apapl.Environment
 				
 		String[] IDs = unwrapStringArray( unitIDs );
 		LinkedList<Integer> IDsAsInt = new LinkedList<Integer>();
-		PlanBase planbase = _planBases.get( agentName );
+		/PlanBase planbase = _planBases.get( agentName );
 //		LinkedList<Unit> units = new LinkedList<Unit>();
 	
 		for( String id : IDs  )
@@ -260,22 +263,29 @@ public class Env extends apapl.Environment
 			IDsAsInt.add( Integer.parseInt( id ) );
 		}
 		
-		planbase.insertFirst( new Attack("test", IDsAsInt, enemies) );
+		planbase.insertFirst( new Attack(actionIdentifier, IDsAsInt, enemies) );
 		return wrapBoolean(true);
 	}
-		
+	*/
+	
+	public synchronized Term attackPos( String agentName, String actionIdentifier, APLNum x, APLNum y) throws ExternalActionFailedException
+	{
+		Agent agent = _agents.get(agentName);
+		Attack attackAction = new Attack(actionIdentifier, agent.getUnits(), x.toInt(), y.toInt());
+		agent.getPlanBase().insertReplace(attackAction);
+		return wrapBoolean(true);
+	}
+	
 	
 	/**
 	 * Broadcast the teammates to all the agents
 	 * @author Roemer Vlasveld
 	 */
 	public void broadcastTeammates()
-	{
-		LinkedList<Term> list = new LinkedList<Term>();
-		
-		for( Agent agent : _agents )
+	{	
+		for( Agent agent : _agents.values() )
 		{
-			for( Agent agent2 : _agents )
+			for( Agent agent2 : _agents.values() )
 			{
 				if( agent.getName() != agent2.getName() )
 					this.throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
@@ -295,13 +305,10 @@ public class Env extends apapl.Environment
 	 */
 	public Agent getAgent( String agentName )
 	{
-		for( Agent agent : _agents )
-		{
-			if( agent.getName().equals( agentName ) )
-				return agent;
-		}
-		
-		return null;
+		if(_agents.containsKey(agentName))
+			return _agents.get(agentName);
+		else
+			return null;
 	}
 	
 	/**
@@ -311,7 +318,7 @@ public class Env extends apapl.Environment
 	 */
 	public Agent getAgent( Integer unit )
 	{
-		for( Agent agent : _agents )
+		for( Agent agent : _agents.values() )
 		{
 			//_logger.info( "Looking at agent " + agent.getName() + " with agents: " + agent.getUnits() );
 			

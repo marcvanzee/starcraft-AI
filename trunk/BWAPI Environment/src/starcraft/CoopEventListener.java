@@ -21,14 +21,14 @@ public class CoopEventListener implements BWAPIEventListener
 {
 	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
-	private static final int UPDATE_FREQ = 5;
+	public static final int UPDATE_FREQ = 5;
 	private Env _env;
 	private volatile boolean _gameStarted = false;
-	private int _counter = 0;
+	private volatile int _counter = 0;
 	
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
-	public CoopEventListener(Env env, List<Agent> agents) {
+	public CoopEventListener(Env env) {
 		_env = env;
 	}
 
@@ -51,7 +51,7 @@ public class CoopEventListener implements BWAPIEventListener
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
 		
-		for(Agent agent : _env._agents)
+		for(Agent agent : _env._agents.values())
 		{
 			agent.initPlanBase();
 			//PlanBase planBase = new PlanBase(agent.getUnits());
@@ -73,7 +73,7 @@ public class CoopEventListener implements BWAPIEventListener
 		Unit u;
 		APLList base;
 		
-		for (Agent agent : _env._agents) 
+		for (Agent agent : _env._agents.values()) 
 		{
 			units = new APLNum(agent.countUnits());
 			wta   = new APLNum(agent.getWTA());
@@ -102,7 +102,7 @@ public class CoopEventListener implements BWAPIEventListener
 				_env._agents.get
 						(
 								(unit.getX() < 1000) ?
-								0 : 1
+								"officer1" : "officer2"
 						)
 						.addUnit(unit.getID());
 			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
@@ -110,7 +110,7 @@ public class CoopEventListener implements BWAPIEventListener
 				_env._agents.get
 				(
 						(unit.getX() < 1000) ?
-						0 : 1
+						"officer1" : "officer2"
 				)
 				.addBuilding(unit.getID());
 			}
@@ -181,6 +181,7 @@ public class CoopEventListener implements BWAPIEventListener
 	 */
 	private void updateAgents()
 	{
+		
 		int countEnemies=0,countBuildings=0;
 		LinkedList<Term> enemyBuildings = new LinkedList<Term>();
 		LinkedList<Term> enemyUnits = new LinkedList<Term>();
@@ -199,25 +200,27 @@ public class CoopEventListener implements BWAPIEventListener
 				enemyBuildings.add(new APLFunction("building", new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
 			}
 		}
-
-		for (Agent agent : _env._agents) 
+		
+		for (Agent agent : _env._agents.values()) 
 		{
+			
+		
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
-
+		
 			throwFinishedActionsEvents(finishedActions, agentName);
 	
 			Point cp = agent.getCP();
 			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
-			unitCP = new APLList(new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
+			unitCP = new APLList(new APLNum(cp.x) ,new APLNum(cp.y));
 			baseHP = new APLNum(agent.getBaseHP());
 			numEnemies = new APLNum(countEnemies);
 			
 			//gameUpdate([unitCPx,unitCPy],HP,numEnemies,[[enemy1x,enemy1y,enemy1HP],[enemy2x,enemy2y,enemy2HP],...],[[enemyBuilding1x,enemyBuilding1y,enemyBuildingHP],[enemyBuilding2x,enemyBuilding2y,enemyBuildingHP],...]
-
+		
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLList(enemyUnits), new APLList(enemyBuildings));
 			
-			System.out.println("Throwing gameUpdate event" +  f.toString());
+			//System.out.println("Throwing gameUpdate event(" +  f.toString());
 			throwEvent(f, agent.getName());
 		}
 	}
@@ -259,17 +262,27 @@ public class CoopEventListener implements BWAPIEventListener
 	 * Method is called by BWAPICoop when the game starts
 	 */
 	@Override
-	public void gameStarted() {
+	public void gameStarted() 
+	{
 		initBWAPI();
 		
 		distributeUnits();
-		initPlanBases();
+		
+		
+		
+		
+		
 		
 		// make sure all 2APL agents know the basic facts
 		init2APLAgents();
 		
+		//Init plan Bases should occur after all units are assigned!
+		initPlanBases();
+		
+
+		
 		// update information
-		updateAgents();
+		//updateAgents();
 		
 		_gameStarted = true;
 	}
@@ -277,11 +290,16 @@ public class CoopEventListener implements BWAPIEventListener
 	@Override
 	public void gameUpdate()
 	{
-		if (_gameStarted) {
-			if (_counter == UPDATE_FREQ) {
+		
+		if (_gameStarted) 
+		{
+			if (_counter == UPDATE_FREQ) 
+			{
 				updateAgents();
 				_counter=0;
-			} else {
+			} 
+			else 
+			{
 				_counter++;
 			}
 		} 

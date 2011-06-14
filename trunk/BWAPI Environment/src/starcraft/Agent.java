@@ -40,7 +40,7 @@ public class Agent
 	 */
 	public void addUnit(int unitID) 
 	{
-		System.out.println("********** A UNIT GOT ADDED id(" + unitID + ")");
+		
 		_units.add(unitID);
 	}
 	
@@ -133,7 +133,7 @@ public class Agent
 	{
 		_planbase = new PlanBase(_units);
 		//TEST: insert attack action to position 0.0.
-		_planbase.insertFirst(new Attack("id", _units, 0,0));
+		//_planbase.insertFirst(new Attack("id", _units, 0,0));
 		
 		//Setup plan bases for the agents.
 		//TEST: insert attack action to position 0.0.
@@ -155,7 +155,7 @@ public class Agent
 	{
 		//System.out.println("executing actions");
 		//First execute actions in planbase.
-		//Set<Action> finishedActions = _planbase.executeActions(_bwapi);
+		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
 		//then update the belief base. Dont know if order matters.
@@ -164,7 +164,7 @@ public class Agent
 		//System.out.println("updating base hp");
 		updateBaseHP();
 		
-		return new HashSet<Action>();//finishedActions;
+		return finishedActions;
 	}
 	
 	private void updateCP() 
@@ -206,6 +206,9 @@ public class Agent
 	}
 
 	public Point getCP() {
+		if(_centerPoint == null)
+			_centerPoint = new Point(-1,-1);
+		
 		return _centerPoint;
 	}
 	
@@ -215,5 +218,10 @@ public class Agent
 
 	public float getWTA() {
 		return _WTA;
+	}
+	
+	public PlanBase getPlanBase()
+	{
+		return _planbase;
 	}
 }
