@@ -288,7 +288,7 @@ public class Env extends apapl.Environment
 			for( Agent agent2 : _agents.values() )
 			{
 				if( agent.getName() != agent2.getName() )
-					this.throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
+					this.throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );	
 			}
 		}
 		
