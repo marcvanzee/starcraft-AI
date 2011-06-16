@@ -21,10 +21,15 @@ Beliefs:
 	centerPoint(0,0).
 	baseHP(0).
 	numEnemies(0).
-	enemyUnits(0).
-	enemyBuildings(0).
+	enemyUnits([]).
+	enemyBuildings([]).
 
-
+	
+	planParent( attackBuilding, attack ).
+	planParent( explore, attack ).
+	planParent( defendBuilding, defend ).
+	
+	
 	count(0).
 	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
 	currentGoal(attack,7).
@@ -36,10 +41,7 @@ Beliefs:
 	prob(P) :- is(X, rand), X < P.
 	
 	
-	
-	planParent( attackBuilding, attack ).
-	planParent( explore, attack ).
-	planParent( defendBuilding, defend ).
+
 	
 	
 Goals:
@@ -86,7 +88,9 @@ PC-rules:
     }
     
     %Note the use of a function with parameter as events, since functions with no parameters are not supported.
-		
+	%Also not that you cannot use another function in this function, it will be ignored. 
+	%So use lists (with sublists) to differtentiate between parameters.
+	
 	
 	event(gameUpdate([CPX,CPY], BaseHP, NumEnemies, EnemyUnits, EnemyBuildings), starcraft) <- true |
 	{
