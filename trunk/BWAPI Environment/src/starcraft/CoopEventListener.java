@@ -193,11 +193,11 @@ public class CoopEventListener implements BWAPIEventListener
 			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
 			{
 				countEnemies++;
-				enemyUnits.add(new APLFunction("unit", new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));
+				enemyUnits.add(new APLList(new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));
 			} else if (enemy.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
 			{
 				countBuildings++;
-				enemyBuildings.add(new APLFunction("building", new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
+				enemyBuildings.add(new APLList(new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
 			}
 		}
 		
@@ -207,7 +207,6 @@ public class CoopEventListener implements BWAPIEventListener
 		
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
-		
 			throwFinishedActionsEvents(finishedActions, agentName);
 	
 			Point cp = agent.getCP();
@@ -215,12 +214,10 @@ public class CoopEventListener implements BWAPIEventListener
 			unitCP = new APLList(new APLNum(cp.x) ,new APLNum(cp.y));
 			baseHP = new APLNum(agent.getBaseHP());
 			numEnemies = new APLNum(countEnemies);
-			
-			//gameUpdate([unitCPx,unitCPy],HP,numEnemies,[[enemy1x,enemy1y,enemy1HP],[enemy2x,enemy2y,enemy2HP],...],[[enemyBuilding1x,enemyBuilding1y,enemyBuildingHP],[enemyBuilding2x,enemyBuilding2y,enemyBuildingHP],...]
-		
+						
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLList(enemyUnits), new APLList(enemyBuildings));
 			
-			//System.out.println("Throwing gameUpdate event(" +  f.toString());
+			System.out.println("Throwing gameUpdate event(" +  f.toString());
 			throwEvent(f, agent.getName());
 		}
 	}
