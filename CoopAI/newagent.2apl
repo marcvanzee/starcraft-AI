@@ -1,0 +1,166 @@
+/* The agent is written exactly as explained in the document 
+ * "Reasoning cycle" that can be found on Google Docs.
+ *
+ * the reasoning cycle is as follows (for a more informal description, see Google Docs document)
+ * TODO: make a flowchart out of this
+ *
+ * <description>								<pre-condition>		<post-condition>
+ * 1. SENSE				
+ * a. Receive joint_plans from other agents		true				true				// can be received at any moment, due to synchronization
+ * b. Receive game_parameters					reasonStep(0)		reasonStep(1)
+ *
+ * 2. REASON
+ * a. Remember cur_priority of cur_plan 		reasonStep(1)
+ *	  Select subgoal with highest priority,		 
+ *	  Remember priority as new_priority,							reasonStep(2)
+ * b. Process joint_plans						reasonStep(2)
+ *    If joint_plan is chosen: 
+ *	  	new_plan = joint_plan										reasonStep(3)
+ *	  	new_priority = joint_plan_priority
+ *    Else:	select own_plan based on 1(a)
+ *		new_plan = own_plan
+ *		new_priority = own_plan_priority							reasonStep(3)
+ *	  						
+ * 3. ACT
+ * a. If new_priority > cur_priority			reasonStep(3)
+ *		execute new_plan											reasonStep(4)
+ * b. If new_plan is a joint plan: send plan	reasonStep(4)		reasonStep(0)
+ *
+ */
+
+BeliefUpdates:
+	// initial beliefs, when game starts
+	{true} 			SetTeamMate(X) 		{teammate(X)}
+	{true} 			SetWta(X) 			{wta(X)}
+	{true} 			SetUnits(X)			{numUnits(X)}
+	{true}			SetBaseCP(Pos)		{baseCP(Pos)}									// Pos = [X,Y]
+	
+	// updated beliefs, when game updates
+	{numUnits(X)}	DestroyUnit(_)		{not numUnits(X), numUnits(X-1)}
+	{true}			SetBaseHP(Y)		{not baseHP(_), baseHP(Y)}
+	{true}			SetOwnCP(PosNew)	{not ownCP(_), ownCP(PosNew)}					// Pos,PosNew = [X,Y]
+	{true}			SetEnemies(PosNew)	{not enemies(_), enemies(PosNew)}
+	{true}			SetEnemyBases(L)	{not enemyBases(_), enemyBases(L)}
+	
+	// other beliefs, for internal processing
+	{true}			SetSubgoal(G,P)		{not subgoal(_,_), subgoal(G,P))
+	{reasonStep(X)}	NextReasonStep(_)	{not reasonStep(X),reasonStep(X+1)}
+	{true}			RememberPriority(X)	{not cur_priority(_), cur_priority(X)}
+	{true}			SetJointPlan(Pl,Pr)	{not jointPlan(_,_), jointPlan(Pl,Pr)}
+
+Beliefs:
+	/*---------------- explanation of beliefs that are used
+	 *
+	 * the character of the agent is defined as the willingness to attack (WTA) and it is 
+	 * assigned once when the game starts.
+	 * 		wta(X), with X € [0,1,..,10]
+	 *
+	 * There are two subgoals, which both are assigned a priority at the beginning of each update
+	 * the winning priority will be the goal that the agent will try to pursue
+	 * these are the subgoals together with their priority
+	 * the priority depends on the WTA and the current situation
+	 * 		subgoal(Subgoal, X), with Subgoal € [attack,defend] and X € [0,1,...,10]
+	 *
+	 * beliefs that are assigned to the agent at the beginning of the game and do not change
+	 * 		baseCP(X,Y)			center point of the base
+	 * 		numUnits(X)			number of units
+	 *
+	 * beliefs that are assigned to the agent are every game update
+	 * 		unitsCP(X,Y)     	center point of own units
+ 	 * 		baseHP(X)			health Points of the own base
+ 	 * 		numEnemyUnits(X)	number of enemy units that are currently visible
+ 	 * 		enemies(L)			a list that contains the location and the HP of the visible enemies
+ 	 *		enemyBases(L)		a list that contains the location and the HP of the visible bases of the enemy
+ 	 *
+ 	 * we use the belief reasonStep(X) to denote in what step of the reasoning cycle we are.
+ 	 *		reasonStep(X), with X € [0,1,..,5]
+ 	 */
+ 	 
+	// initialize reasonStep
+	reasonStep(0).
+	
+Plans:
+	@starcraft(hello(),_)
+	
+PC-rules:	
+ 	//----------------------- game initializes -------------------------------------------
+	event(gameStarted( Wta, Units, BaseLocation ),starcraft) <- true |
+	{
+		SetWta(Wta);
+		SetUnits(Units);
+		SetBasCP(BaseLocation);
+		print(gamestarted)
+	}
+	
+	// ---------------------- receiving a joint plan ------------------------------------
+	message( TeamMate, ProposalPlan, Priority ) <- teamMate( TeamMate ) | {
+		SetJointPlan(ProposalPlan, Priority)
+	}
+	
+	// ----------------------- reasoning step #1b, game update ---------------------------
+	event(gameUpdate( UnitCP, BaseHP, NumEnemies, EnemyUnitList, EnemyBuildingList ), starcraft) <- wta(WTA) and reasonStep(0) |
+	{
+		// receive all information
+		SetOwnCP(UnitCP);
+		SetBaseHP(BaseHP);
+		SetNumEnemies(NumEnemies);
+		SetEnemies(EnemyUnitList);
+		SetEnemyBases(EnemyBuildingList);
+		
+		// advance to next reasoning step
+		NextReasonStep(_)
+	}
+	
+	// ----------------------- reasoning step #2a, determine subgoal priorities ----------
+	true <- reasonStep(1) and baseCP(BaseCP) and baseHP(BaseHP) and numUnits(NumUnits) and
+								unitCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
+								enemyBases(EnemyBases) and wta(WTA) | {
+								
+		// remember the current priority, if we are performing a plan
+		if B(subgoal(_,P)) then {
+			RememberPriority(P)
+		}
+		
+		@starcraft(allocatePriorities( BaseCP, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
+		if B(Ret = [actionresult(AttackPr, DefendPr)]) then {
+			// choose the subgoal that has the highest priority
+			if (AttackPr > DefendPr) then {
+				SetSubgoal(attack, AttackPr)
+			} else {
+				SetSubgoal(defend, DefendPr)
+			}
+		}
+		
+		NextReasonStep(_)
+	}
+	
+	// ----------------------- reasoning step #2b, process joint plans -----------------
+	true <- reasonStep(2) | {
+		skip
+	}
+	
+	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
+	{
+		print(ownUnitDestroyed(UnitsLeft));
+		DestroyUnit(_)
+	}
+	
+	event( teamMate(teammate), starcraft ) <- true |
+	{
+		SetTeamMate( teammate )
+	}
+	
+	// reply to proposal negative
+	informIgnoreJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, ignoreJointPlan( ProposalPlan ) );
+		skip
+	}
+	
+	// reply to proposal positive
+	informObeyJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, obeyJointPlan( ProposalPlan ) );
+		skip
+	}
+	
