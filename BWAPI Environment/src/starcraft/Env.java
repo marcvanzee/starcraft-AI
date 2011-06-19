@@ -1,15 +1,12 @@
 package starcraft;
 
 import java.awt.Point;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 import starcraft.actions.Attack;
-import starcraft.actions.PlanBase;
-import eisbot.proxy.model.*;
 import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -63,6 +60,7 @@ public class Env extends apapl.Environment
 	 */
 	private void start()
 	{
+		broadcastTeammates();
 		if(!_clientThread.isAlive())
 			_clientThread.start();
 	}
@@ -277,25 +275,48 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	
-	/**
-	 * Broadcast the teammates to all the agents
-	 * @author Roemer Vlasveld
-	 */
-	public void broadcastTeammates()
-	{	
-		for( Agent agent : _agents.values() )
-		{
-			for( Agent agent2 : _agents.values() )
-			{
-				if( agent.getName() != agent2.getName() )
-					this.throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );	
+	public synchronized Term allocatePriorities( String agentName, APLList BaseCP, APLNum BaseHP, APLNum NumUnits, APLList UnitCP, APLNum NumEnemies, APLList Enemies, APLList EnemyBases, APLNum WTA )
+	{
+		double defendPriority = 0;
+		double attackPriority = 0;
+		
+		// first of all, look if there are enemies around
+		if (Enemies.isEmpty()) {
+			// is there an enemybase?
+			if (EnemyBases.isEmpty()) {
+				// there is nothing, so we will defend or attack depending on our WTA
+				// both priorities will be very low, so an important event will be able
+				// to interrupt it easily
+				
+				// the WTA has domain [0,1], so these priorities are not able to exceed 0,1
+				defendPriority = Math.random() / 10 * (1 - WTA.toDouble());
+				attackPriority = Math.random() / 10 * WTA.toDouble();
+			} else {
+				// there is an enemy-base, but no enemy characters: attack it!
+				attackPriority = 1;
+				defendPriority = 0;
+			}
+		} else {
+			// there are enemies, ohoh, better watch out
+			// first see if we are with more units
+			if (NumUnits.toInt() > NumEnemies.toInt()) {
+				// attack the enemy
+				attackPriority = 1;
+				defendPriority = 0;
+			} else {
+				// we are with less units, shit!
+				// RETREAT RETREAT!!!
+				defendPriority = 1;
+				attackPriority = 0;
 			}
 		}
 		
+		System.out.println("allocating priorities for " + agentName);
+		
+		APLList ret = new APLList(new APLNum(attackPriority),new APLNum(defendPriority));
+		
+		return ret;
 	}
-	
-	
 	
 	// ------------------------------------------ PUBLIC NOT-2APL METHODS ------------------------
 	
@@ -378,6 +399,26 @@ public class Env extends apapl.Environment
     	   System.exit(-1);
        }
     }
+	
+	/**
+	 * Broadcast the teammates to all the agents
+	 * @author Roemer Vlasveld
+	 */
+	public void broadcastTeammates()
+	{	
+		System.out.println("broadcasting for " + _agents.size() + " agents");
+		for( Agent agent : _agents.values() )
+		{
+			for( Agent agent2 : _agents.values() )
+			{
+				if( agent.getName() != agent2.getName() ) {
+					System.out.println("BROADCASST )" + agent.getName() + " to " + agent2.getName());
+					throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
+				}
+			}
+		}
+		
+	}
 	
 	// ------------------------------------------ PUBLIC STATIC NON-2APL METHODS -----------------
 	
