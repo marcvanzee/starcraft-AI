@@ -51,20 +51,21 @@ BeliefUpdates:
 	{true}				SetBusy()			{busy}
 	{true}				SetIdle()			{not busy}
 	{subgoal(X,Y)}		SetSubgoal(X1,Y1)	{not subgoal(X,Y), subgoal(X1,Y1)}
+	{curPriority(X)}	RememberPriority(Y)	{not curPriority(X), curPriority(Y)}
 	
 	// plan beliefs, a plan consists of: currentPlan(Plan, Priority)
-	{newPlan(X,Y)}		SetNewPlan(X2,Y2)		{not newPlan(X,Y), newPlan(X2,Y2)}
-	
 	{currentPlan(X)}	SetPlan(Y)			{not currentPlan(X), currentPlan(Y)}
-	{jointPlan(X)}		SetJointPlan(Y)	{not jointPlan(X),jointPlan(Y)}
-	{singlePlan(X)}		SetSinglePlan(Y)	{not singlePlan(X),singlePlan(Y)}
 	
-	{coJointPlan(X)}	SetCoPlan(Y)			{not coPlan(X), coPlan(Y)}
-	{coSinglePlan(X)}	SetCoSinglePlan(Y)		{not coSinglePlan(X), coSinglePlan(Y)}
-	{coSubgoal(X,Y)}	SetCoSubgoal(X1,Y1)		{not coSubgoal(X,Y), coSubgoal(X1,Y1)}
+	{jointPlan(X)}		SetJointPlan(Y)		{not jointPlan(X),jointPlan(Y)}
+	{singlePlan(X)}		SetSinglePlan(Y)	{not singlePlan(X),singlePlan(Y)}
+	{newPlan(X,Y)}		SetNewPlan(X2,Y2)	{not newPlan(X,Y), newPlan(X2,Y2)}
+	
+	{coJointPlan(X)}	SetCoJointPlan(Y)	{not coPlan(X), coPlan(Y)}
+	{coSinglePlan(X)}	SetCoSinglePlan(Y)	{not coSinglePlan(X), coSinglePlan(Y)}
+	{coSubgoal(X,Y)}	SetCoSubgoal(X1,Y1)	{not coSubgoal(X,Y), coSubgoal(X1,Y1)}
 	
 	{true}				PlanShared()		{planShared}
-	{true}				PlanRcvd{}			{planRcvd}
+	{true}				PlanRcvd()			{planRcvd}
 	{true}				ResetComm()			{not planShared, not planRcvd}
 
 Beliefs:
@@ -76,6 +77,7 @@ Beliefs:
 	enemies(0).
 	enemyBases(0).
 	subgoal(0,0).
+	curPriority(0).
 	
 	newPlan(0).
 	currentPlan(0).
@@ -85,6 +87,9 @@ Beliefs:
 	coJointPlan(0).
 	coSinglePlan(0).
 	coSubgoal(0,0).
+	
+	selectPlan(X) :- is(X,0).
+	selectSinglePlan(X) :- is(X,1).
 	
 	
 	// description of the plans: plan(Identifier, Joint, Subgoal, Plan), where
@@ -99,7 +104,7 @@ Beliefs:
 	
 Plans:
 	@starcraft(hello(),_)
-		
+
 PC-rules:	
  	//----------------------- game initializes -------------------------------------------
 	event(gameStarted( Wta, Units, BaseLocation ), starcraft) <- true |
@@ -129,14 +134,17 @@ PC-rules:
 		determineSubgoals(0)
 	]
 	}
-	
+
 	// ----------------------- determine subgoal priorities ----------
 	determineSubgoals(_) <- baseCP(BaseCP) and baseHP(BaseHP) and numUnits(NumUnits) and
 							ownCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
-							enemyBases(EnemyBases) and wta(WTA) | 
+							enemyBases(EnemyBases) and wta(WTA) and subgoal(_,CurPr) | 
 	{
 	[	
 		@starcraft(allocatePriorities( BaseCP, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
+		
+		// remember the current priority to compare later
+		RememberPriority(CurPr);
 		
 		if B(Ret = [actionresult([AttackPr, DefendPr])]) then 
 		{
@@ -154,84 +162,140 @@ PC-rules:
 	
 	// ----------------------- selecting the potential plans ----------
 	// first select the most relevant plan. if this plan is a joint plan, select a
-	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(Plan,CurPr) | {
-	[
+	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan) and curPriority(CurPr) | 
+	{
 		if B(NewPr < CurPr) then 
 		{
-			// TODO: add a procedure that will select a plan
-			selectPlan(NewPlan);
+			B(selectPlan(NewPlan));				// TODO: implement this procedure
 			if B(plan(NewPlan,joint,_,_)) then
 			{
 				// we have selected a joint plan, so we need to set this properly
 				SetJointPlan(NewPlan);
 				
-				// select a plan that is not a joint plan
-				selectSinglePlan(
-				
-				
-			
-			SetSinglePlan(0,NewPr);
-			
-			// if this plan is a joint plan, we also need to select an alternative plan
-			if B(plan(0,true,_,_)) then {
-				// TODO: add a procedure that will select an alternative plan
-				SetAlternativePlan(1);
+				// select a plan that is not a joint plan as a backup plan
+				B(selectSinglePlan(SinglePlan));	// TODO: implement this procedure
+				SetSinglePlan(SinglePlan)
+			} else 
+			{
+				// we have selected a single plan, so we need to empty the joint plan
+				SetJointPlan([])
 			}
 		} else {
-			// don't change plan
-			SetPotentialPlan(Plan,CurPr);
-		}
-		
-		sharePlan(0)
-	]
+			// use the current plan as the new plan
+			SetSinglePlan(CurrentPlan);
+			
+			// dont use a joint plan
+			SetJointPlan([])
+		};
+		sharePlans(0);
+		selectRelevantPlan(0)
 	}
 	
 	// ----------------------- sharing a plan, sending and receiving ----------
-	sharePlan(_) <- potentialPlan(Plan,Pr) and teamMate(TeamMate) | {
+	sharePlans(_) <- jointPlan(JointPlan) and singlePlan(SinglePlan) and subgoal(Subgoal,Pr) and teamMate(TeamMate) | {
 	[
-		send( TeamMate, inform, potentialPlan( Plan, Pr ) );
+		send( TeamMate, inform, plans(jointPlan(JointPlan),singlePlan(SinglePlan),subgoal(Subgoal,Pr)) );
 		PlanShared()
 	]
 	}
 	
-	message( TeamMate, potentialPlan(HisPlan, Priority) ) <- teamMate( TeamMate ) | 
+	message( TeamMate, inform, _, _, plans(jointPlan(JointPlan),singlePlan(SinglePlan),subgoal(Subgoal,Pr)) ) <- teamMate( TeamMate ) | 
 	{
-		SetCoPlan(HisPlan, Priority);
+	[
+		SetCoJointPlan(JointPlan);
+		SetCoSinglePlan(SinglePlan);
+		SetCoSubgoal(Subgoal,Pr);
 		PlanRcvd()
+	]
 	}
 	
-	message( TeamMate, acceptJointPlan(MyPlan) ) <- teamMate( TeamMate ) | 
+	// -----------------------  select most relevant plan ----------
+	// see flowchart on Google Docs for a better overview of this method
+	selectRelevantPlan(_) <- planShared and planRcvd and 
+					jointPlan(OwnJointPlan) and singlePlan(OwnSinglePlan) and subgoal(OwnSubgoal,OwnPr) and
+					coJointPlan(CoJointPlain) and coSinglePlan(CoSinglePlan) and coSubgoal(CoSubgoal,CoPr) |
 	{
-		SetCoPlan(HisPlan, Priority);
-		JointPlanRcvd()
-	}
-	
-	message( TeamMate, declineJointPlan(MyPlan) ) <- teamMate( TeamMate ) | 
-	{
-		SetCoPlan(HisPlan, Priority);
-		JointPlanRcvd()
-	}
-	
-	// -----------------------  ----------
-	true <- planShared and planRcvd and coPlan(HisPlan, HisPr) and subgoal(Subgoal, MyPr)| {
-		if B((Subgoal = attack) and plan(HisPlan,true,_,_))
+		if B(not (OwnJointPlan = [])) then 
 		{
-			// if i am not planning to defend and if he is proposing a joint plan
-			if B(HisPr > MyPr) 
+			if B(not (CoJointPlan = [])) then
 			{
-				// if his priority exceeds mine we will pursue his goal
-				SetNewPlan(HisPlan, HisPr);
-				send( TeamMate, inform, acceptJointPlan( HisPlan ) )
-			} else 
+				if B(OwnPr > CoPr) then
+				{
+					if B(not (CoSubgoal = defend)) then
+					{
+						setPlan(OwnJointPlan)
+					} else {
+						setPlan(OwnSinglePlan)
+					}
+				} else if B(OwnPr = CoPr) then 
+				{
+					setPlan(OwnSinglePlan)
+				} else 
+				{
+					if B(not (OwnSubgoal = defend)) then
+					{
+						setPlan(CoJointPlan)
+					} else
+					{
+						setPlan(OwnSinglePlan)
+					}
+				}
+			} else
 			{
-				// else we will decline his proposal
-				send( TeamMate, inform, declineJointPlan( HisPlan ) )
-	
-	
-	// ----------------------- reasoning step #2b, plan selection - own plans -----------------
-	selectPlan() <- true | {
-		print(selectingPlan)
+				if B(OwnPr < CoPr and not (CoSubgoal = defend)) then
+				{
+					setPlan(OwnJointPlan)
+				} else
+				{
+					setPlan(OwnSinglePlan)
+				}
+			}
+		} else
+		{
+			if B(not(CoJointPlan = []) and not(OwnSubGoal = defend)) then 
+			{
+				if B(CoPriority =< OwnPriority) then
+				{
+					setPlan(OwnSinglePlan)
+				} else
+				{
+					setPlan(CoJointPlan)
+				}
+			} else
+			{
+				setPlan(OwnSinglePlan)
+			}
+		}
 	}
+	
+	// ----------------------- execution of plan; only if it differs from the current plan -----------------
+	setPlan(NewPlan) <- currentPlan(CurrentPlan) |
+	{
+		if B(not (NewPlan = CurrentPlan)) then {
+			SetPlan(NewPlan)
+		} else {
+			// TODO: continue with the current plan
+			skip
+		};
+		
+		SetIdle()
+	}
+	
+	// ------------ TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO 
+	// ------------ TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO 
+	// ------------ These two methods
+	
+	// ----------------------- plan selection - select the plan that is most applicable to the current context -----------------
+	//selectPlan(X) <- true | {
+	//	skip
+	//}
+	
+	// ----------------------- plan selection - select the plan that is most applicable to the current context and thats NOT a joint plan 
+	//selectSinglePlan(X) <- true | {
+	//	is(X, 0)
+	//}	
+	
+	
 	
 	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
 	{
