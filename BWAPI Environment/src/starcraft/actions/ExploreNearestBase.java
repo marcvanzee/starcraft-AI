@@ -96,10 +96,9 @@ public class ExploreNearestBase extends Action
 		}
 	}
 
-
 	public boolean isFinished(BWAPICoop bwapi)
 	{
-		//If every unit is idle, the aciton is finished. 
+		//If every unit is idle, the action is finished. 
 		//Dunno if this is good behaviour.
 		for( int unit : _usingUnits)
 		{
