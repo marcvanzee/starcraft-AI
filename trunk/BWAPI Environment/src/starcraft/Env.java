@@ -323,8 +323,6 @@ public class Env extends apapl.Environment
 			}
 		}
 		
-		System.out.println("allocating priorities for " + agentName);
-		
 		APLList ret = new APLList(new APLNum(attackPriority),new APLNum(defendPriority));
 		
 		return ret;
