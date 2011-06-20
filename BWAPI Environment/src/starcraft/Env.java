@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import starcraft.actions.Action;
 import starcraft.actions.Attack;
+import starcraft.actions.ExploreNearestBase;
 import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -267,10 +270,19 @@ public class Env extends apapl.Environment
 	}
 	*/
 	
+	
+	public synchronized Term explore(String agentName, String actionIdentifier, APLNum myBaseId, APLNum otherBaseId)
+	{
+		Agent agent = _agents.get(agentName);
+		Action exploreAction = new ExploreNearestBase(actionIdentifier, agent.getUnits(), myBaseId.toInt(), otherBaseId.toInt());
+		agent.getPlanBase().insertReplace(exploreAction);
+		return wrapBoolean(true);
+	}
+	
 	public synchronized Term attackPos( String agentName, String actionIdentifier, APLNum x, APLNum y) throws ExternalActionFailedException
 	{
 		Agent agent = _agents.get(agentName);
-		Attack attackAction = new Attack(actionIdentifier, agent.getUnits(), x.toInt(), y.toInt());
+		Action attackAction = new Attack(actionIdentifier, agent.getUnits(), x.toInt(), y.toInt());
 		agent.getPlanBase().insertReplace(attackAction);
 		return wrapBoolean(true);
 	}
