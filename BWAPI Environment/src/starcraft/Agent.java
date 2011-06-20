@@ -18,7 +18,7 @@ public class Agent
 	private Point _centerPoint;
 	private BWAPICoop _bwapi;
 //	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character domain [0,10]
-	private float _WTA;
+	private double _WTA;
 	private PlanBase _planbase;
 	
 	/**
@@ -216,7 +216,7 @@ public class Agent
 		return _baseHP;
 	}
 
-	public float getWTA() {
+	public double getWTA() {
 		return _WTA;
 	}
 	
