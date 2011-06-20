@@ -4,29 +4,7 @@
  *
  * ---------------------- reasoning cycle ----------------------------------------------------------
  *
- * the reasoning cycle is as follows (for a more informal description, see Google Docs document)
- * TODO: make a flowchart out of this
- *
- * 1. SENSE				
- * *  Receive joint_plans from other agents		// can be received at any moment, due to synchronization
- * a. Receive game_parameters
- *
- * 2. REASON
- * a. Remember cur_priority of cur_plan
- *	  Select subgoal with highest priority,		 
- *	  Remember priority as new_priority,
- * b. Process joint_plans
- *    If joint_plan is chosen:
- *	  	new_plan = joint_plan
- *	  	new_priority = joint_plan_priority
- *    Else:	select own_plan based on 1(a)
- *		new_plan = own_plan
- *		new_priority = own_plan_priority
- *	  						
- * 3. ACT
- * a. If new_priority > cur_priority
- *		execute new_plan
- * b. If new_plan is a joint plan: send plan
+ * the reasoning cycle can be found in the flow chart of Google docs
  *
  *
  * ---------------- explanation of beliefs that are used -----------------------------------------
@@ -71,17 +49,26 @@ BeliefUpdates:
 	
 	// other beliefs, for internal processing
 	{true}				SetBusy()			{busy}
-	{busy}				SetIdle()			{not busy}
+	{true}				SetIdle()			{not busy}
 	{subgoal(X,Y)}		SetSubgoal(X1,Y1)	{not subgoal(X,Y), subgoal(X1,Y1)}
-	{cur_priority(X)}	RememberPriority(Y)	{not cur_priority(X), cur_priority(Y)}
-	{true}				SetJointPlan(Pl,Pr)	{jointPlan(Pl,Pr)}
-	{jointPlan(Pl,Pr)}	RemoveJointPlan()	{not jointPlain(Pl,Pr)}
 	
-	// temp
-	{true}				SetPlan(X,Y)		{not finished}
+	// plan beliefs, a plan consists of: currentPlan(Plan, Priority)
+	{newPlan(X,Y)}		SetNewPlan(X2,Y2)		{not newPlan(X,Y), newPlan(X2,Y2)}
+	
+	{currentPlan(X)}	SetPlan(Y)			{not currentPlan(X), currentPlan(Y)}
+	{jointPlan(X)}		SetJointPlan(Y)	{not jointPlan(X),jointPlan(Y)}
+	{singlePlan(X)}		SetSinglePlan(Y)	{not singlePlan(X),singlePlan(Y)}
+	
+	{coJointPlan(X)}	SetCoPlan(Y)			{not coPlan(X), coPlan(Y)}
+	{coSinglePlan(X)}	SetCoSinglePlan(Y)		{not coSinglePlan(X), coSinglePlan(Y)}
+	{coSubgoal(X,Y)}	SetCoSubgoal(X1,Y1)		{not coSubgoal(X,Y), coSubgoal(X1,Y1)}
+	
+	{true}				PlanShared()		{planShared}
+	{true}				PlanRcvd{}			{planRcvd}
+	{true}				ResetComm()			{not planShared, not planRcvd}
 
 Beliefs:
-// initial beliefs, required for beliefupdates
+// beliefs required for belief updates
 	numUnits(0).
 	baseHP(0).
 	ownCP(0).
@@ -89,8 +76,26 @@ Beliefs:
 	enemies(0).
 	enemyBases(0).
 	subgoal(0,0).
-	cur_priority(0).
 	
+	newPlan(0).
+	currentPlan(0).
+	jointPlan(0).
+	singlePlan(0).
+	
+	coJointPlan(0).
+	coSinglePlan(0).
+	coSubgoal(0,0).
+	
+	
+	// description of the plans: plan(Identifier, Joint, Subgoal, Plan), where
+	// Identifier: 	a number denoting the unique identity of the plan
+	// Joint: 		a boolean denoting whether this is a joint plan or not
+	// Subgoal:		the subgoal that this plan belongs to: attack/defend
+	// Plan: 		the plan
+	plan(0,single,attack,[]).
+	plan(1,joint,defend,[]).
+	plan(2,single,defend,[]).
+	plan(3,sing;e,attack,[]).
 	
 Plans:
 	@starcraft(hello(),_)
@@ -99,19 +104,15 @@ PC-rules:
  	//----------------------- game initializes -------------------------------------------
 	event(gameStarted( Wta, Units, BaseLocation ), starcraft) <- true |
 	{
+	[
 		SetWta(Wta);
 		SetUnits(Units);
 		SetBaseCP(BaseLocation);
 		print(gamestarted)
-	}
-	
-	// ---------------------- receiving a joint plan ------------------------------------
-	message( TeamMate, ProposalPlan, Priority ) <- teamMate( TeamMate ) | 
-	{
-		SetJointPlan(ProposalPlan, Priority)
+	]
 	}
 
-	// ----------------------- reasoning step #1b, game update ---------------------------
+	// ----------------------- game update ---------------------------
 	event(gameUpdate( UnitCP, BaseHP, NumEnemies, EnemyUnitList, EnemyBuildingList ), starcraft) <- wta(WTA) and not busy |
 	{
 	[
@@ -129,20 +130,15 @@ PC-rules:
 	]
 	}
 	
-	// ----------------------- reasoning step #2a, determine subgoal priorities ----------
+	// ----------------------- determine subgoal priorities ----------
 	determineSubgoals(_) <- baseCP(BaseCP) and baseHP(BaseHP) and numUnits(NumUnits) and
-							unitCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
+							ownCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
 							enemyBases(EnemyBases) and wta(WTA) | 
 	{
-		// remember the current priority, if we are performing a plan
-		if B(subgoal(_,Pr)) then 
-		{
-			RememberPriority(Pr)
-		};
-		
+	[	
 		@starcraft(allocatePriorities( BaseCP, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
 		
-		if B(Ret = [actionresult(AttackPr, DefendPr)]) then 
+		if B(Ret = [actionresult([AttackPr, DefendPr])]) then 
 		{
 			// choose the subgoal that has the highest priority
 			if B(AttackPr > DefendPr) then {
@@ -151,58 +147,98 @@ PC-rules:
 				SetSubgoal(defend, DefendPr)
 			}
 		};
-		
-		processJointPlans(0)
+
+		selectPotentialPlans(0)
+	]
 	}
 	
-	// ----------------------- reasoning step #2b, process joint plans -----------------
-	processJointPlans(_) <- teamMate(TeamMate) | {	
-	
-		// did we receive a plan?				
-		if B(jointPlain(Plan, HisPriority)) then {
-		
-			// do we accept the plan?
-			if B( subgoal(attack, MyPriority) and HisPriority > MyPriority) then {
-				SetPlan(Plan, HisPriority);
-				informObeyJointPlan(TeamMate, Plan)
-			} else {
+	// ----------------------- selecting the potential plans ----------
+	// first select the most relevant plan. if this plan is a joint plan, select a
+	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(Plan,CurPr) | {
+	[
+		if B(NewPr < CurPr) then 
+		{
+			// TODO: add a procedure that will select a plan
+			selectPlan(NewPlan);
+			if B(plan(NewPlan,joint,_,_)) then
+			{
+				// we have selected a joint plan, so we need to set this properly
+				SetJointPlan(NewPlan);
+				
+				// select a plan that is not a joint plan
+				selectSinglePlan(
+				
+				
 			
-			// we did not accept the plan
-				informIgnoreJointPlan(TeamMate, Plan );
-				selectPlan()
+			SetSinglePlan(0,NewPr);
+			
+			// if this plan is a joint plan, we also need to select an alternative plan
+			if B(plan(0,true,_,_)) then {
+				// TODO: add a procedure that will select an alternative plan
+				SetAlternativePlan(1);
 			}
-			
-		// we did not have receive a plan
 		} else {
-			selectPlan()
-		};
+			// don't change plan
+			SetPotentialPlan(Plan,CurPr);
+		}
 		
-		SetIdle()
+		sharePlan(0)
+	]
 	}
 	
+	// ----------------------- sharing a plan, sending and receiving ----------
+	sharePlan(_) <- potentialPlan(Plan,Pr) and teamMate(TeamMate) | {
+	[
+		send( TeamMate, inform, potentialPlan( Plan, Pr ) );
+		PlanShared()
+	]
+	}
+	
+	message( TeamMate, potentialPlan(HisPlan, Priority) ) <- teamMate( TeamMate ) | 
+	{
+		SetCoPlan(HisPlan, Priority);
+		PlanRcvd()
+	}
+	
+	message( TeamMate, acceptJointPlan(MyPlan) ) <- teamMate( TeamMate ) | 
+	{
+		SetCoPlan(HisPlan, Priority);
+		JointPlanRcvd()
+	}
+	
+	message( TeamMate, declineJointPlan(MyPlan) ) <- teamMate( TeamMate ) | 
+	{
+		SetCoPlan(HisPlan, Priority);
+		JointPlanRcvd()
+	}
+	
+	// -----------------------  ----------
+	true <- planShared and planRcvd and coPlan(HisPlan, HisPr) and subgoal(Subgoal, MyPr)| {
+		if B((Subgoal = attack) and plan(HisPlan,true,_,_))
+		{
+			// if i am not planning to defend and if he is proposing a joint plan
+			if B(HisPr > MyPr) 
+			{
+				// if his priority exceeds mine we will pursue his goal
+				SetNewPlan(HisPlan, HisPr);
+				send( TeamMate, inform, acceptJointPlan( HisPlan ) )
+			} else 
+			{
+				// else we will decline his proposal
+				send( TeamMate, inform, declineJointPlan( HisPlan ) )
+	
+	
+	// ----------------------- reasoning step #2b, plan selection - own plans -----------------
 	selectPlan() <- true | {
 		print(selectingPlan)
 	}
 	
 	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
 	{
-		print(ownUnitDestroyed(UnitsLeft));
 		DestroyUnit()
 	}
 	
-	event( teamMate(teammate), starcraft ) <- true |
+	event( teamMate(Teammate), starcraft ) <- true |
 	{
-		SetTeamMate( teammate )
-	}
-	
-	// reply to proposal negative
-	informIgnoreJointPlan( TeamMate, ProposalPlan ) <- true |
-	{
-		send( TeamMate, inform, ignoreJointPlan( ProposalPlan ) )
-	}
-	
-	// reply to proposal positive
-	informObeyJointPlan( TeamMate, ProposalPlan ) <- true |
-	{
-		send( TeamMate, inform, obeyJointPlan( ProposalPlan ) )
+		SetTeamMate( Teammate )
 	}
