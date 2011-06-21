@@ -111,7 +111,7 @@ public class JNIBWAPI {
     private native int[] getChokePoints();
     private native int[] getRegions();
     private native int[] getPolygon(int regionID);
-    private native int[] getBaseLocations();
+    public native int[] getBaseLocations();
 
     // unit commands: http://code.google.com/p/bwapi/wiki/Unit
     public native void attackMove(int unitID, int x, int y); 
@@ -332,7 +332,8 @@ public class JNIBWAPI {
      */
     public void loadMapData(boolean enableBWTA) {
             map = new Map(getMapWidth(), getMapHeight(), getMapName(), getMapHash(), getHeightData(), getBuildableData(), getWalkableData());               
-            if (!enableBWTA) {
+            if (!enableBWTA) 
+            {
                     return;
             }
             

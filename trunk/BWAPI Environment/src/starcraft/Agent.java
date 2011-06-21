@@ -20,6 +20,7 @@ public class Agent
 //	private int _WTA;				// willingness to attack, the aggressiveness of the agent, which determines his character domain [0,10]
 	private double _WTA;
 	private PlanBase _planbase;
+	private Point _basePos = new Point();
 	
 	/**
 	 * Constructor
@@ -49,8 +50,10 @@ public class Agent
 	 * 
 	 * @param unit
 	 */
-	public void addBuilding(int unitID) {
+	public void addBuilding(int unitID, int X, int Y) 
+	{
 		_base = unitID;
+		_basePos = new Point(X,Y);
 	}
 	
 	/**
@@ -110,7 +113,8 @@ public class Agent
 	 * Returns a random unit
 	 * @return
 	 */
-	public int getRandomUnit() {
+	public int getRandomUnit() 
+	{
 		int rand = new Random().nextInt(_units.size());
 		Object agentArray[] = _units.toArray();
 		Object randomAgent = agentArray[rand];
@@ -155,6 +159,7 @@ public class Agent
 	{
 		//System.out.println("executing actions");
 		//First execute actions in planbase.
+		System.out.println("Updating agent " + _agName);
 		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
@@ -201,7 +206,8 @@ public class Agent
 		//System.out.println("Updated CP(" + avgX + "," + avgY + ") numUnitsRetrieved(" + numUnitsRetrieved + ")");
 	}
 	
-	private void updateBaseHP() {
+	private void updateBaseHP() 
+	{
 		_baseHP = _bwapi.getUnit(_base).getHitPoints();
 	}
 
@@ -212,10 +218,18 @@ public class Agent
 		return _centerPoint;
 	}
 	
-	public int getBaseHP() {
+	public Point getBasePos()
+	{
+		return _basePos;
+	}
+	
+	public int getBaseHP() 
+	{
 		return _baseHP;
 	}
 
+	
+	
 	public double getWTA() {
 		return _WTA;
 	}

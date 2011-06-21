@@ -16,4 +16,6 @@ public class BWAPICoop extends JNIBWAPI
 	{
 		super(listener);
 	}
+
+	
 }
