@@ -112,7 +112,7 @@ public class CoopEventListener implements BWAPIEventListener
 						(unit.getX() < 1000) ?
 						"officer1" : "officer2"
 				)
-				.addBuilding(unit.getID());
+				.addBuilding(unit.getID(), unit.getX(), unit.getY());
 			}
 			
 			// this needs to be checked
@@ -130,6 +130,7 @@ public class CoopEventListener implements BWAPIEventListener
 			}
 			*/
 		}
+		
 		
 		//_logger.info("Units distributed");
 	}
@@ -229,7 +230,7 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			APLIdent actionId = new APLIdent(action.getIdentity());
 			APLFunction function = new APLFunction("actionPerformed", actionId);
-			//throwEvent(function, agentName);
+			throwEvent(function, agentName);
 		}
 		
 	}

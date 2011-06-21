@@ -63,9 +63,9 @@ public class PlanBase
 	 */
 	private void init(int... unitIds)
 	{
-		_minimalPlanBase = new MinimalPlanBase();
+		_minimalPlanBase = new MinimalPlanBase(unitIds);
 		_actionsPerID = new HashMap<Integer,Action>();
-		_currentActionId = 0;
+		_currentActionId = 1;
 	}
 		
 	/**
@@ -141,6 +141,7 @@ public class PlanBase
 	public synchronized Set<Action> executeActions(BWAPICoop bwapi)
 	{
 		//System.out.println("Executing Actions!");
+		//System.out.println(_minimalPlanBase.getActionsToExecute().toString());
 		Set<Integer> actionIds = _minimalPlanBase.getActionsToExecute();
 		Set<Integer> finishedActionIds = new HashSet<Integer>();
 		Set<Action> finishedActions = new HashSet<Action>();
@@ -149,7 +150,7 @@ public class PlanBase
 		{
 			Action action = _actionsPerID.get(actionId);
 			action.perform(bwapi);
-			//System.out.println("Performed Action!" + actionId);
+			System.out.println("Performed Action!" + actionId);
 			if(action.isFinished(bwapi))
 			{
 				_actionsPerID.remove(actionId);
@@ -170,7 +171,10 @@ public class PlanBase
 			actionsFinishedArray[i] = actionID;
 		}
 		
+		_minimalPlanBase.actionsFinished(actionsFinishedArray);
+		
 		return finishedActions;
 	}
+	
 	
 }

@@ -1,6 +1,7 @@
 package starcraft.actions;
 
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -16,22 +17,44 @@ public class ExploreNearestBase extends Action
 {
 	private List<Integer> _usingUnits;
 	private int _myBuildingId;
+	private Point _myBuildingPos;
 	private int _coBuidlingId;
+	private Point _coBuildingPos;
+	
 	private Point _enemyBuildingToExplore;
 	
 	private boolean _isPerformedOnce;
 	private boolean _hasReachedSpot;
 	
-	public static int DISTANCE_TRESHOLD = 10;
+	public static int DISTANCE_TRESHOLD_BUIlDING = 1000;
+	public static int DISTANCE_TRESHOLD_DESTINATION = 100; 
 	
 	public ExploreNearestBase(String identifier,  Collection<Integer> units, int myBuildingId, int coBuildingId)
 	{
 		super(identifier);
+		init();
 		_usingUnits.addAll(units);
 		_myBuildingId = myBuildingId;
 		_coBuidlingId = coBuildingId;
 		this._isPerformedOnce = false;
 		this._hasReachedSpot = false;
+	}
+	
+	public ExploreNearestBase(String identifier, Collection<Integer> units, int myBuildingX, int myBuildingY, int coBuildingX, int coBuildingY)
+	{
+		super(identifier);
+		_usingUnits.addAll(units);
+		
+		_myBuildingPos = new Point(myBuildingX,myBuildingY);
+		_coBuildingPos = new Point(coBuildingX,coBuildingY);
+		
+		this._isPerformedOnce = false;
+		this._hasReachedSpot = false;
+	}
+	
+	private void init()
+	{
+		_usingUnits = new ArrayList<Integer>();
 	}
 	
 	@Override
@@ -47,32 +70,50 @@ public class ExploreNearestBase extends Action
 
 	private Point determineNearestEnemy(BWAPICoop bwapi)
 	{
-		//get building positions.
-		Point myBuilding = new Point();
-		myBuilding.x = bwapi.getUnit(_myBuildingId).getX();
-		myBuilding.y = bwapi.getUnit(_myBuildingId).getY();
-		Point coBuilding = new Point();
-		coBuilding.x = bwapi.getUnit(_coBuidlingId).getX();
-		coBuilding.y = bwapi.getUnit(_coBuidlingId).getY();
 		
-		//Get nearest Enemy Starting location
+		//get building positions.
+		
+		if(_myBuildingPos == null)
+		{
+			_myBuildingPos = new Point();
+			_myBuildingPos.x = bwapi.getUnit(_myBuildingId).getX();
+			_myBuildingPos.y = bwapi.getUnit(_myBuildingId).getY();
+		}
+		if(_coBuildingPos == null)
+		{
+			_coBuildingPos = new Point();
+			_coBuildingPos.x = bwapi.getUnit(_coBuidlingId).getX();
+			_coBuildingPos.y = bwapi.getUnit(_coBuidlingId).getY();
+		}
+		
+		//Get nearest Enemy Starting corner
 		Point nearestEnemyPos = null;
 		double smallestEnemyDistance = Double.MAX_VALUE;
 		
-		for(BaseLocation b : bwapi.getMap().getBaseLocations())
+		int width = bwapi.getMap().getWalkWidth() * 8;
+		int height = bwapi.getMap().getWalkHeight() * 8;
+		
+		
+		
+		List<Point> corners = new ArrayList<Point>();
+		corners.add(new Point(50,50));
+		corners.add(new Point(50,height-50));
+		corners.add(new Point(width-50,50));
+		corners.add(new Point(width-50, height-50));
+		
+		
+		for(Point corner  : corners)
 		{
-			System.out.println("Found baselocation: " + b.getX() + " " + b.getY());
 			
-			if(b.isStartLocation())
+			if(corner.distance(_myBuildingPos) > DISTANCE_TRESHOLD_BUIlDING)
 			{
-				Point startLocation = new Point(b.getX(),b.getY());
-				if(startLocation.distance(coBuilding) > DISTANCE_TRESHOLD)
+				if(corner.distance(_coBuildingPos) > DISTANCE_TRESHOLD_BUIlDING)
 				{
-					double distance = startLocation.distance(myBuilding);
+					double distance = corner.distance(_myBuildingPos);
 					if(distance < smallestEnemyDistance)
 					{
 						smallestEnemyDistance = distance;
-						nearestEnemyPos = startLocation;
+						nearestEnemyPos = corner;
 					}
 				}
 					
@@ -88,11 +129,14 @@ public class ExploreNearestBase extends Action
 		{
 			_enemyBuildingToExplore = determineNearestEnemy(bwapi);			
 			
+			System.out.println("Position to explore: " + _enemyBuildingToExplore + " units: " + _usingUnits.size() + " my:" + _myBuildingPos + " otyer" + _coBuildingPos);
+			if(_enemyBuildingToExplore != null)
 			for(Integer unitID : _usingUnits)
 			{
 				bwapi.move(unitID, _enemyBuildingToExplore.x, _enemyBuildingToExplore.y);
 			}
 			_isPerformedOnce = true;
+					
 		}
 	}
 
@@ -100,13 +144,34 @@ public class ExploreNearestBase extends Action
 	{
 		//If every unit is idle, the action is finished. 
 		//Dunno if this is good behaviour.
+		int count = 0;
+		
+		if(_usingUnits.size() == 0)
+			return true;
+		
+		
 		for( int unit : _usingUnits)
 		{
-			if(!bwapi.getUnit( unit ).isIdle() )
+			Point pos = new Point();
+			pos.x = bwapi.getUnit(unit).getX();
+			pos.y = bwapi.getUnit(unit).getY();
+			
+			if(pos.distance(_enemyBuildingToExplore) < DISTANCE_TRESHOLD_DESTINATION)
+			{
+				System.out.println("TARGET REACHED!!" + pos);
+				return true;
+			}
+			
+			if(count > 2)
+			{
+				//System.out.println("TARGET NOT REACHED!!" + pos + "  distance: " + pos.distance(_enemyBuildingToExplore));
 				return false;
+			}
+				
+			count++;
 		}
 		
-		return true;
+		return false;
 	}
 
 }

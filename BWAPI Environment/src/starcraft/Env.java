@@ -271,23 +271,47 @@ public class Env extends apapl.Environment
 	*/
 	
 	
-	public synchronized Term explore(String agentName, String actionIdentifier, APLNum myBaseId, APLNum otherBaseId)
+	public synchronized Term explore(String agentName, APLIdent actionIdentifier, APLNum myBaseId, APLNum otherBaseId) throws ExternalActionFailedException
 	{
+		System.out.println("In explore: " + actionIdentifier.toString());
+		//Dirty hack
 		Agent agent = _agents.get(agentName);
-		Action exploreAction = new ExploreNearestBase(actionIdentifier, agent.getUnits(), myBaseId.toInt(), otherBaseId.toInt());
+		int myBuilding = agent.getBuilding();
+		int otherBuilding = 0;
+		if(agentName.equals("officer1"))
+		{
+			otherBuilding = _agents.get("officer2").getBuilding();
+		}
+		else
+		{
+			otherBuilding = _agents.get("officer1").getBuilding();
+		}
+	
+		
+		System.out.println("got buildings: " + otherBuilding);
+		
+		Action exploreAction = new ExploreNearestBase(actionIdentifier.toString(), agent.getUnits(), myBuilding, otherBuilding);
+		System.out.println("Created Explore Action: ");
+		
 		agent.getPlanBase().insertReplace(exploreAction);
+		
+		System.out.println("Done ");
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term attackPos( String agentName, String actionIdentifier, APLNum x, APLNum y) throws ExternalActionFailedException
+	public synchronized Term attackPos( String agentName, APLIdent actionIdentifier, APLNum x, APLNum y) throws ExternalActionFailedException
 	{
 		Agent agent = _agents.get(agentName);
-		Action attackAction = new Attack(actionIdentifier, agent.getUnits(), x.toInt(), y.toInt());
+		Action attackAction = new Attack(actionIdentifier.toString(), agent.getUnits(), x.toInt(), y.toInt());
 		agent.getPlanBase().insertReplace(attackAction);
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term allocatePriorities( String agentName, APLList BaseCP, APLNum BaseHP, APLNum NumUnits, APLList UnitCP, APLNum NumEnemies, APLList Enemies, APLList EnemyBases, APLNum WTA )
+	public synchronized Term allocatePriorities( String agentName, APLList BaseCP, APLNum BaseHP, 
+												 APLNum NumUnits, APLList UnitCP, 
+												 APLNum NumEnemies, APLList Enemies, 
+												 APLList EnemyBases, APLNum WTA ) 
+	throws ExternalActionFailedException
 	{
 		double defendPriority = 0;
 		double attackPriority = 0;

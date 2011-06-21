@@ -58,25 +58,33 @@ public class MinimalPlanBase
 	public synchronized void insertReplace(int actionId, int... unitIds)
 	{
 		boolean firstMap = true;
-		for(HashMap<Integer,Integer> map : _planBase)
+		if(_planBase.size() == 0)
 		{
-			
-			for(int unitId : unitIds)
-			{
-				//In the first map replace/add the actionID
-				if(firstMap)
-				{
-					map.put(unitId, actionId);
-				}
-				// In the rest of the replace/add 0. Indicating no action.
-				else
-				{
-					map.put(unitId, 0);
-				}
-			}
-			firstMap = false;
+			insertFirst(actionId, unitIds);
 		}
-		shift(0);
+		else
+		{
+			for(HashMap<Integer,Integer> map : _planBase)
+			{
+				
+				for(int unitId : unitIds)
+				{
+					//In the first map replace/add the actionID
+					if(firstMap)
+					{
+						map.put(unitId, actionId);
+					}
+					// In the rest of the replace/add 0. Indicating no action.
+					else
+					{
+						map.put(unitId, 0);
+					}
+				}
+				firstMap = false;
+			}
+			shift(0);
+		}
+		
 	}
 	
 	/**
@@ -104,6 +112,7 @@ public class MinimalPlanBase
 		
 		//adds the list at the beginning of the map.
 		_planBase.add(0, first);
+		
 		
 		shift(0);
 	}
