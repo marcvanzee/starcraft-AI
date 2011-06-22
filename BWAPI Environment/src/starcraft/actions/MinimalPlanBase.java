@@ -142,11 +142,8 @@ public class MinimalPlanBase
 		_planBase.add(last);
 		
 		
-		//System.out.println("beforeShift");
-		//System.out.println(this);
 		shift(_planBase.size()-2);
-		//System.out.println("afterShift");
-		//System.out.println(this);
+
 	}
 	
 	public synchronized void insertOnlyWhenIdle(int actionId, int... unitIds)

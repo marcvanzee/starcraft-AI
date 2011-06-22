@@ -202,17 +202,13 @@ public class CoopEventListener implements BWAPIEventListener
 			}
 		}
 		
-		System.out.println("in update agents# " + _env._agents.size());
 		
 		for (Agent agent : _env._agents.values()) 
 		{
-			System.out.println("Updating agent I" + agent.getName() + "-- " + agent.getCP() + "--" + agent.getBaseHP() + " -- " + countEnemies);
-		
+			
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
 			throwFinishedActionsEvents(finishedActions, agentName);
-			
-			System.out.println("Updating agent II" + agent.getName() + "-- " + agent.getCP() + "--" + agent.getBaseHP() + " -- " + countEnemies);
 			
 			Point cp = agent.getCP();
 			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
@@ -222,7 +218,6 @@ public class CoopEventListener implements BWAPIEventListener
 						
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLList(enemyUnits), new APLList(enemyBuildings));
 			
-			//System.out.println("Throwing gameUpdate event(" +  f.toString());
 			throwEvent(f, agent.getName());
 		}
 	}

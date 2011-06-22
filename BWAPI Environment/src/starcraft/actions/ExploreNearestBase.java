@@ -152,16 +152,18 @@ public class ExploreNearestBase extends Action
 		
 		for( int unit : _usingUnits)
 		{
-			Point pos = new Point();
-			pos.x = bwapi.getUnit(unit).getX();
-			pos.y = bwapi.getUnit(unit).getY();
 			
-			if(pos.distance(_enemyBuildingToExplore) < DISTANCE_TRESHOLD_DESTINATION)
+			Unit u = bwapi.getUnit(unit);
+			if(u != null)
 			{
-				System.out.println("TARGET REACHED!!" + pos);
-				return true;
-			}
+				Point pos = new Point(u.getX(), u.getY());
 			
+				if(pos.distance(_enemyBuildingToExplore) < DISTANCE_TRESHOLD_DESTINATION)
+				{
+					System.out.println("TARGET REACHED!!" + pos);
+					return true;
+				}
+			}
 			if(count > 2)
 			{
 				//System.out.println("TARGET NOT REACHED!!" + pos + "  distance: " + pos.distance(_enemyBuildingToExplore));
