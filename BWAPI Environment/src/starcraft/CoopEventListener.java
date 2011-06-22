@@ -202,14 +202,18 @@ public class CoopEventListener implements BWAPIEventListener
 			}
 		}
 		
+		System.out.println("in update agents# " + _env._agents.size());
+		
 		for (Agent agent : _env._agents.values()) 
 		{
-			
+			System.out.println("Updating agent I" + agent.getName() + "-- " + agent.getCP() + "--" + agent.getBaseHP() + " -- " + countEnemies);
 		
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
 			throwFinishedActionsEvents(finishedActions, agentName);
-	
+			
+			System.out.println("Updating agent II" + agent.getName() + "-- " + agent.getCP() + "--" + agent.getBaseHP() + " -- " + countEnemies);
+			
 			Point cp = agent.getCP();
 			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
 			unitCP = new APLList(new APLNum(cp.x) ,new APLNum(cp.y));
@@ -228,8 +232,10 @@ public class CoopEventListener implements BWAPIEventListener
 	{
 		for(Action action : finishedActions)
 		{
+			System.out.println("gonna throwing actionPerfomed: " + action.getIdentity());
 			APLIdent actionId = new APLIdent(action.getIdentity());
 			APLFunction function = new APLFunction("actionPerformed", actionId);
+			System.out.println("gonna throwing actionPerfomed: " + actionId.toString() + "--" + function.toString());
 			throwEvent(function, agentName);
 		}
 		
@@ -293,8 +299,15 @@ public class CoopEventListener implements BWAPIEventListener
 		{
 			if (_counter == UPDATE_FREQ) 
 			{
-				updateAgents();
-				_counter=0;
+				try
+				{
+					updateAgents();
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+					_counter=0;
 			} 
 			else 
 			{
