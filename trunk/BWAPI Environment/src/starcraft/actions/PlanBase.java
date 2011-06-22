@@ -140,8 +140,6 @@ public class PlanBase
 	 */
 	public synchronized Set<Action> executeActions(BWAPICoop bwapi)
 	{
-		//System.out.println("Executing Actions!");
-		//System.out.println(_minimalPlanBase.getActionsToExecute().toString());
 		Set<Integer> actionIds = _minimalPlanBase.getActionsToExecute();
 		Set<Integer> finishedActionIds = new HashSet<Integer>();
 		Set<Action> finishedActions = new HashSet<Action>();
@@ -150,7 +148,6 @@ public class PlanBase
 		{
 			Action action = _actionsPerID.get(actionId);
 			action.perform(bwapi);
-			System.out.println("Performed Action!" + actionId);
 			if(action.isFinished(bwapi))
 			{
 				_actionsPerID.remove(actionId);
@@ -159,7 +156,7 @@ public class PlanBase
 			}
 		}
 		
-		//System.out.println("Done with loop!");
+
 		
 		//Fit the contents of the finished actions list into an array.
 		int[] actionsFinishedArray = new int[finishedActionIds.size()];
@@ -173,8 +170,6 @@ public class PlanBase
 		
 		_minimalPlanBase.actionsFinished(actionsFinishedArray);
 		
-		System.out.println("after removing actions");
-		System.out.println(_minimalPlanBase);
 		
 		return finishedActions;
 	}

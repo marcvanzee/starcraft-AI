@@ -273,7 +273,7 @@ public class Env extends apapl.Environment
 	
 	public synchronized Term explore(String agentName, APLIdent actionIdentifier, APLNum myBaseId, APLNum otherBaseId) throws ExternalActionFailedException
 	{
-		System.out.println("In explore: " + actionIdentifier.toString());
+		
 		//Dirty hack
 		Agent agent = _agents.get(agentName);
 		int myBuilding = agent.getBuilding();
@@ -288,14 +288,13 @@ public class Env extends apapl.Environment
 		}
 	
 		
-		System.out.println("got buildings: " + otherBuilding);
+
 		
 		Action exploreAction = new ExploreNearestBase(actionIdentifier.toString(), agent.getUnits(), myBuilding, otherBuilding);
-		System.out.println("Created Explore Action: ");
+	
 		
 		agent.getPlanBase().insertReplace(exploreAction);
-		
-		System.out.println("Done ");
+
 		return wrapBoolean(true);
 	}
 	
@@ -440,13 +439,11 @@ public class Env extends apapl.Environment
 	 */
 	public void broadcastTeammates()
 	{	
-		System.out.println("broadcasting for " + _agents.size() + " agents");
 		for( Agent agent : _agents.values() )
 		{
 			for( Agent agent2 : _agents.values() )
 			{
 				if( agent.getName() != agent2.getName() ) {
-					System.out.println("BROADCASST )" + agent.getName() + " to " + agent2.getName());
 					throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
 				}
 			}
