@@ -174,7 +174,8 @@ public class MinimalPlanBase
 		{
 			for(Integer actionId : _planBase.get(0).values())
 			{
-				actions.add(actionId);
+				if(actionId > 0)
+					actions.add(actionId);
 			}
 		}
 		return actions;
@@ -298,7 +299,7 @@ public class MinimalPlanBase
 		a.insertFirst(2, 1,4,5);
 		System.out.println(a);
 		a.insertFirst(3, 2,3);
-		
+		System.out.println(a);
 		System.out.println("action finsiehd 3");
 		a.actionsFinished(3);
 		System.out.println(a);

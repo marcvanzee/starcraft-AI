@@ -173,6 +173,9 @@ public class PlanBase
 		
 		_minimalPlanBase.actionsFinished(actionsFinishedArray);
 		
+		System.out.println("after removing actions");
+		System.out.println(_minimalPlanBase);
+		
 		return finishedActions;
 	}
 	

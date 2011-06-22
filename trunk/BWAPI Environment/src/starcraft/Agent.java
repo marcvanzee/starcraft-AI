@@ -159,7 +159,6 @@ public class Agent
 	{
 		//System.out.println("executing actions");
 		//First execute actions in planbase.
-		System.out.println("Updating agent " + _agName);
 		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
@@ -208,12 +207,22 @@ public class Agent
 	
 	private void updateBaseHP() 
 	{
-		_baseHP = _bwapi.getUnit(_base).getHitPoints();
+		int hp = -1;
+		try
+		{
+			hp = _bwapi.getUnit(_base).getHitPoints();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		if(hp != -1)
+			_baseHP = hp;
 	}
 
 	public Point getCP() {
 		if(_centerPoint == null)
-			_centerPoint = new Point(-1,-1);
+			_centerPoint = new Point(0,0);
 		
 		return _centerPoint;
 	}
