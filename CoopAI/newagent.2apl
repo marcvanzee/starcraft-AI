@@ -270,9 +270,10 @@ PC-rules:
 	}
 	
 	// ----------------------- execution of plan; only if it differs from the current plan -----------------
-	setPlan(NewPlan) <- currentPlan(CurrentPlan) |
+	setPlan(NewPlan) <- currentPlan(CurrentPlan) and baseCP([X,Y]) and coBase(CoX, CoY) |
 	{
 	[
+		@starcraft( explore(str, X, Y, CoX, CoY), _ );
 		if B(not (NewPlan = CurrentPlan)) then {
 			SetPlan(NewPlan)
 		} else {
