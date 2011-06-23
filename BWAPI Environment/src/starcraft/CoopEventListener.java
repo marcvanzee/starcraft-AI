@@ -39,6 +39,8 @@ public class CoopEventListener implements BWAPIEventListener
 		
 		//Loads the map, use false else starcraft might freeze.
 		_env._bwapi.loadMapData(false);
+		
+		_env._bwapi.setGameSpeed(20);
 	}
 
 	/**
@@ -314,8 +316,19 @@ public class CoopEventListener implements BWAPIEventListener
 	@Override
 	public void unitDiscover(int unitID) 
 	{	
+		System.out.println("unit discovered: " + unitID);
+		
+		try{
 		APLFunction event = new APLFunction("enemyUnitDiscovered", new APLNum(unitID));
         throwEventToAll( event );
+        System.out.println("unit discovered: " + event.toString());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			
+		}
+   
 	}
 	
 	@Override
@@ -380,7 +393,8 @@ public class CoopEventListener implements BWAPIEventListener
 	}
 
 	@Override
-	public void unitDestroy(int unitID) {
+	public void unitDestroy(int unitID) 
+	{
 		// unit can be both a character or a building. doesn't matter for the agent, he deletes both
 		Agent ag = getAgent(unitID);
 		ag.removeElement(unitID);
