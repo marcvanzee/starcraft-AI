@@ -43,6 +43,7 @@ public class ExploreNearestBase extends Action
 	public ExploreNearestBase(String identifier, Collection<Integer> units, int myBuildingX, int myBuildingY, int coBuildingX, int coBuildingY)
 	{
 		super(identifier);
+		init();
 		_usingUnits.addAll(units);
 		
 		_myBuildingPos = new Point(myBuildingX,myBuildingY);

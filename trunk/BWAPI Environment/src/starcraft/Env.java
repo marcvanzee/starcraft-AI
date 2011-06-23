@@ -290,6 +290,7 @@ public class Env extends apapl.Environment
 		{
 			e.printStackTrace();
 		}
+		System.out.println("EXPLORED EXPLORED EXPLORED XPLORED XPLORED");
 		return wrapBoolean(true);
 	}
 	
