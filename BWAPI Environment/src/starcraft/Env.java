@@ -278,28 +278,12 @@ public class Env extends apapl.Environment
 	*/
 	
 	
-	public synchronized Term explore(String agentName, APLIdent actionIdentifier, APLNum myBaseId, APLNum otherBaseId) throws ExternalActionFailedException
+	public synchronized Term explore(String agentName, APLIdent actionIdentifier, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
 	{
 		
 		//Dirty hack
 		Agent agent = _agents.get(agentName);
-		int myBuilding = agent.getBuilding();
-		int otherBuilding = 0;
-		if(agentName.equals("officer1"))
-		{
-			otherBuilding = _agents.get("officer2").getBuilding();
-		}
-		else
-		{
-			otherBuilding = _agents.get("officer1").getBuilding();
-		}
-	
-		
-
-		
-		Action exploreAction = new ExploreNearestBase(actionIdentifier.toString(), agent.getUnits(), myBuilding, otherBuilding);
-	
-		
+		Action exploreAction = new ExploreNearestBase(actionIdentifier.toString(), agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
 		agent.getPlanBase().insertReplace(exploreAction);
 
 		return wrapBoolean(true);
