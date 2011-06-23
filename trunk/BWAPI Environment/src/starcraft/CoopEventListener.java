@@ -204,7 +204,6 @@ public class CoopEventListener implements BWAPIEventListener
 			}
 		}
 
-		System.out.println("enemyunits: " + enemyUnits.size());
 		enemyU = new APLList(enemyUnits);
 		enemyB = new APLList(enemyBuildings);
 
@@ -281,6 +280,8 @@ public class CoopEventListener implements BWAPIEventListener
 		//updateAgents();
 		
 		_gameStarted = true;
+		
+		_env.broadcastTeammates();
 	}
 	
 	@Override
@@ -335,7 +336,6 @@ public class CoopEventListener implements BWAPIEventListener
 	public void connected() 
 	{
 		throwEventToAll("connected");
-		_env.broadcastTeammates();
 	}
 	
 	@Override

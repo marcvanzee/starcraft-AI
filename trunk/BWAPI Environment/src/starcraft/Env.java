@@ -65,7 +65,6 @@ public class Env extends apapl.Environment
 	 */
 	private void start()
 	{
-		broadcastTeammates();
 		if(!_clientThread.isAlive())
 			_clientThread.start();
 	}
@@ -421,7 +420,7 @@ public class Env extends apapl.Environment
 		}catch(Exception e)
 		{
 			e.printStackTrace();
-			System.out.println("Erro " + name + " -- " + agNames);
+			System.out.println("Error " + name + " -- " + agNames);
 			System.exit(-1);
 		}
 	}
@@ -450,7 +449,10 @@ public class Env extends apapl.Environment
 			for( Agent agent2 : _agents.values() )
 			{
 				if( agent.getName() != agent2.getName() ) {
-					throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName())), agent.getName() );
+					// send: teamMate(name, baseX, baseY)
+					Point basePos = agent2.getBasePos();
+					System.out.println(basePos.toString());
+					throwEvent( new APLFunction("teamMate", new APLIdent(agent2.getName()), new APLNum(basePos.x), new APLNum(basePos.y)), agent.getName() );
 				}
 			}
 		}
