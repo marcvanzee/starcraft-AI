@@ -67,6 +67,8 @@ BeliefUpdates:
 	{true}				PlanShared()		{planShared}
 	{true}				PlanRcvd()			{planRcvd}
 	{true}				ResetComm()			{not planShared, not planRcvd}
+	
+	{num(X)}			Inc()				{not num(X),num(X+1)}
 
 Beliefs:
 // beliefs required for belief updates
@@ -91,6 +93,8 @@ Beliefs:
 	selectPlan(X) :- is(X,0).
 	selectSinglePlan(X) :- is(X,1).
 	
+	num(0).
+	
 	
 	// description of the plans: plan(Identifier, Joint, Subgoal, Plan), where
 	// Identifier: 	a number denoting the unique identity of the plan
@@ -100,7 +104,7 @@ Beliefs:
 	plan(0,single,attack,[]).
 	plan(1,joint,defend,[]).
 	plan(2,single,defend,[]).
-	plan(3,sing;e,attack,[]).
+	plan(3,single,attack,[]).
 	
 Plans:
 	@starcraft(hello(),_)
@@ -121,6 +125,7 @@ PC-rules:
 	event(gameUpdate( UnitCP, BaseHP, NumEnemies, EnemyUnitList, EnemyBuildingList ), starcraft) <- wta(WTA) and not busy |
 	{
 	[
+		Inc();
 		SetBusy();
 		
 		// receive all information
@@ -164,6 +169,7 @@ PC-rules:
 	// first select the most relevant plan. if this plan is a joint plan, select a
 	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan) and curPriority(CurPr) | 
 	{
+	[
 		if B(NewPr < CurPr) then 
 		{
 			B(selectPlan(NewPlan));				// TODO: implement this procedure
@@ -189,6 +195,7 @@ PC-rules:
 		};
 		sharePlans(0);
 		selectRelevantPlan(0)
+	]
 	}
 	
 	// ----------------------- sharing a plan, sending and receiving ----------
@@ -215,6 +222,7 @@ PC-rules:
 					jointPlan(OwnJointPlan) and singlePlan(OwnSinglePlan) and subgoal(OwnSubgoal,OwnPr) and
 					coJointPlan(CoJointPlain) and coSinglePlan(CoSinglePlan) and coSubgoal(CoSubgoal,CoPr) |
 	{
+	[
 		if B(not (OwnJointPlan = [])) then 
 		{
 			if B(not (CoJointPlan = [])) then
@@ -266,11 +274,13 @@ PC-rules:
 				setPlan(OwnSinglePlan)
 			}
 		}
+	]
 	}
 	
 	// ----------------------- execution of plan; only if it differs from the current plan -----------------
 	setPlan(NewPlan) <- currentPlan(CurrentPlan) |
 	{
+	[
 		if B(not (NewPlan = CurrentPlan)) then {
 			SetPlan(NewPlan)
 		} else {
@@ -279,6 +289,7 @@ PC-rules:
 		};
 		
 		SetIdle()
+	]
 	}
 	
 	// ------------ TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO 
