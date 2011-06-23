@@ -82,9 +82,13 @@ public class Env extends apapl.Environment
 	
 	private String[] getAgentNames() 
 	{
-		String s[] = new String[_agents.size()];
-		for (int i=0; i<_agents.size();i++) {
-			s[i] = _agents.get(i).getName();
+		String s[] = new String[_agents.keySet().size()];
+		int i=0; 
+		
+		for(String agentName : _agents.keySet())
+		{
+			s[i] = agentName;
+			i++;
 		}
 		
 		return s;
@@ -94,12 +98,13 @@ public class Env extends apapl.Environment
 	
 	public synchronized Term hello(String agentName) throws ExternalActionFailedException
 	{
-		if (_agents.size() < TOTAL_AGENTS) {
+		if (_agents.size() < TOTAL_AGENTS) 
+		{
 			_logger.info(agentName + " registered");
 			_agents.put(agentName, new Agent(agentName,_bwapi));
 			if (_agents.size() == TOTAL_AGENTS) {
 				start();
-			}
+		}
 		} else {
 			throw new ExternalActionFailedException("env> ERROR: too many agents try to register");
 		}
@@ -412,12 +417,15 @@ public class Env extends apapl.Environment
 		//Note the use of a function with 1 meaningless argument, since no arguments are not supported for throwing as event.
 		APLFunction event = new APLFunction(name, new APLIdent("true"));
 		String[] agNames = getAgentNames();
+		System.out.println("Gonna throw "  + agNames[0] + agNames[1]);
 		try
 		{
-			super.throwEvent(event, agNames);
+			if(agNames.length > 0)
+				super.throwEvent(event, agNames);
 		}catch(Exception e)
 		{
 			e.printStackTrace();
+			System.out.println("Erro " + name + " -- " + agNames);
 			System.exit(-1);
 		}
 	}
