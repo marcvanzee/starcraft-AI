@@ -297,6 +297,18 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
+	public synchronized Term attackPos(String agentName, APLIdent actionIdentifier, APLNum unitId )
+	{
+		Agent agent = _agents.get(agentName);
+
+		List<Integer> units = new ArrayList<Integer>();
+		units.add(unitId.toInt());
+		
+		Action  attackAction  = new Attack(actionIdentifier.toString(), agent.getUnits(), units);
+		agent.getPlanBase().insertReplace(attackAction);
+		return wrapBoolean(true);
+	}
+	
 	public synchronized Term allocatePriorities( String agentName, APLList BaseCP, APLNum BaseHP, 
 												 APLNum NumUnits, APLList UnitCP, 
 												 APLNum NumEnemies, APLList Enemies, 
