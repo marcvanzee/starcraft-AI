@@ -3,7 +3,6 @@ package starcraft;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import starcraft.actions.Action;
@@ -21,7 +20,7 @@ public class CoopEventListener implements BWAPIEventListener
 {
 	
 	// ------------------------------------------ VARIABLE DECLARATIONS ----------------------------
-	public static final int UPDATE_FREQ = 5;
+	public static final int UPDATE_STEP = 40;
 	private Env _env;
 	private volatile boolean _gameStarted = false;
 	private volatile int _counter = 0;
@@ -188,7 +187,8 @@ public class CoopEventListener implements BWAPIEventListener
 		LinkedList<Term> enemyUnits = new LinkedList<Term>();
 		APLNum baseHP, numEnemies;
 		APLList unitCP;
-		
+		APLList enemyU, enemyB;
+
 		for (Unit enemy : _env._bwapi.getEnemyUnits()) 
 		{
 			if (enemy.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
@@ -201,11 +201,13 @@ public class CoopEventListener implements BWAPIEventListener
 				enemyBuildings.add(new APLList(new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
 			}
 		}
-		
-		
+
+		System.out.println("enemyunits: " + enemyUnits.size());
+		enemyU = new APLList(enemyUnits);
+		enemyB = new APLList(enemyBuildings);
+
 		for (Agent agent : _env._agents.values()) 
 		{
-			
 			String agentName = agent.getName();
 			Set<Action> finishedActions = agent.update();
 			throwFinishedActionsEvents(finishedActions, agentName);
@@ -216,7 +218,7 @@ public class CoopEventListener implements BWAPIEventListener
 			baseHP = new APLNum(agent.getBaseHP());
 			numEnemies = new APLNum(countEnemies);
 						
-			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, new APLList(enemyUnits), new APLList(enemyBuildings));
+			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, enemyU, enemyB);
 			
 			throwEvent(f, agent.getName());
 		}
@@ -266,20 +268,13 @@ public class CoopEventListener implements BWAPIEventListener
 		initBWAPI();
 		
 		distributeUnits();
-		
-		
-		
-		
-		
-		
+
 		// make sure all 2APL agents know the basic facts
 		init2APLAgents();
 		
 		//Init plan Bases should occur after all units are assigned!
 		initPlanBases();
-		
 
-		
 		// update information
 		//updateAgents();
 		
@@ -288,11 +283,10 @@ public class CoopEventListener implements BWAPIEventListener
 	
 	@Override
 	public void gameUpdate()
-	{
-		
+	{	
 		if (_gameStarted) 
 		{
-			if (_counter == UPDATE_FREQ) 
+			if (_counter == UPDATE_STEP) 
 			{
 				try
 				{
@@ -308,7 +302,7 @@ public class CoopEventListener implements BWAPIEventListener
 			{
 				_counter++;
 			}
-		} 
+		}
 	}
 	
 	@Override

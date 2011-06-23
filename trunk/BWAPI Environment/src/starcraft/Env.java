@@ -56,6 +56,8 @@ public class Env extends apapl.Environment
 		_listener = new CoopEventListener(this);
 		_bwapi = new BWAPICoop(_listener);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
+		
+		
 	}
 		
 	/**
