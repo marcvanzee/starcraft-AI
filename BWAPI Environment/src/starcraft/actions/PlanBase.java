@@ -147,12 +147,15 @@ public class PlanBase
 		for(int actionId : actionIds)
 		{
 			Action action = _actionsPerID.get(actionId);
-			action.perform(bwapi);
-			if(action.isFinished(bwapi))
+			if(action != null)
 			{
-				_actionsPerID.remove(actionId);
-				finishedActionIds.add(actionId);
-				finishedActions.add(action);
+				action.perform(bwapi);
+				if(action.isFinished(bwapi))
+				{
+					_actionsPerID.remove(actionId);
+					finishedActionIds.add(actionId);
+					finishedActions.add(action);
+				}
 			}
 		}
 		
