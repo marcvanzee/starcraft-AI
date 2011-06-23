@@ -76,14 +76,22 @@ public class ExploreNearestBase extends Action
 		if(_myBuildingPos == null)
 		{
 			_myBuildingPos = new Point();
-			_myBuildingPos.x = bwapi.getUnit(_myBuildingId).getX();
-			_myBuildingPos.y = bwapi.getUnit(_myBuildingId).getY();
+			Unit mybuilding = bwapi.getUnit(_myBuildingId);
+			if(mybuilding != null)
+			{
+				_myBuildingPos.x = mybuilding.getX();
+				_myBuildingPos.y = mybuilding.getY();
+			}
 		}
 		if(_coBuildingPos == null)
 		{
 			_coBuildingPos = new Point();
-			_coBuildingPos.x = bwapi.getUnit(_coBuidlingId).getX();
-			_coBuildingPos.y = bwapi.getUnit(_coBuidlingId).getY();
+			Unit otherBuilding = bwapi.getUnit(_coBuidlingId);
+			if(otherBuilding != null)
+			{
+				_coBuildingPos.x = otherBuilding.getX();
+				_coBuildingPos.y = otherBuilding.getY();
+			}
 		}
 		
 		//Get nearest Enemy Starting corner
