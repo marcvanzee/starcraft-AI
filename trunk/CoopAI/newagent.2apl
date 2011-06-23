@@ -38,6 +38,7 @@ BeliefUpdates:
 	{true} 				SetWta(X) 			{wta(X)}
 	{true} 				SetUnits(X)			{numUnits(X)}
 	{true}				SetBaseCP(Pos)		{baseCP(Pos)}									// Pos = [X,Y]
+	{true}				SetCoBase(X,Y)		{coBase(X,Y)}
 	
 	// updated beliefs, when game updates
 	{numUnits(X)}		DestroyUnit()		{not numUnits(X), numUnits(X-1)}
@@ -105,7 +106,7 @@ Beliefs:
 	plan(1,joint,defend,[]).
 	plan(2,single,defend,[]).
 	plan(3,single,attack,[]).
-	
+
 Plans:
 	@starcraft(hello(),_)
 
@@ -170,27 +171,18 @@ PC-rules:
 	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan) and curPriority(CurPr) | 
 	{
 	[
-		if B(NewPr < CurPr) then 
+		B(selectPlan(NewPlan));				// TODO: implement this procedure
+		if B(plan(NewPlan,joint,_,_)) then
 		{
-			B(selectPlan(NewPlan));				// TODO: implement this procedure
-			if B(plan(NewPlan,joint,_,_)) then
-			{
-				// we have selected a joint plan, so we need to set this properly
-				SetJointPlan(NewPlan);
-				
-				// select a plan that is not a joint plan as a backup plan
-				B(selectSinglePlan(SinglePlan));	// TODO: implement this procedure
-				SetSinglePlan(SinglePlan)
-			} else 
-			{
-				// we have selected a single plan, so we need to empty the joint plan
-				SetJointPlan([])
-			}
-		} else {
-			// use the current plan as the new plan
-			SetSinglePlan(CurrentPlan);
+			// we have selected a joint plan, so we need to set this properly
+			SetJointPlan(NewPlan);
 			
-			// dont use a joint plan
+			// select a plan that is not a joint plan as a backup plan
+			B(selectSinglePlan(SinglePlan));	// TODO: implement this procedure
+			SetSinglePlan(SinglePlan)
+		} else 
+		{
+			// we have selected a single plan, so we need to empty the joint plan
 			SetJointPlan([])
 		};
 		sharePlans(0);
@@ -306,14 +298,13 @@ PC-rules:
 	//	is(X, 0)
 	//}	
 	
-	
-	
 	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
 	{
 		DestroyUnit()
 	}
 	
-	event( teamMate(Teammate), starcraft ) <- true |
+	event( teamMate( Teammate, CoBaseX, CoBaseY ), starcraft ) <- true |
 	{
-		SetTeamMate( Teammate )
+		SetTeamMate( Teammate );
+		SetCoBase( CoBaseX , CoBaseY )
 	}
