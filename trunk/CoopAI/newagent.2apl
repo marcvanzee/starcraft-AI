@@ -75,7 +75,7 @@ Beliefs:
 	curPriority(0).
 	
 	newPlan(0).
-	currentPlan(0).
+	currentPlan(0,[]).
 	
 	coPlan(0).
 	
@@ -122,45 +122,45 @@ Beliefs:
 	
 	// DEFENDING
 	plan( 0, 10,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
-	plan( 0, 9,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
-	plan( 0, 8,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
+	plan( 1, 9,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
+	plan( 2, 8,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
 	
-	plan( 0, 10,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
-	plan( 0, 9,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
-	plan( 0, 8,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
+	plan( 10, 10,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
+	plan( 11, 9,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
+	plan( 12, 8,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
 
-	plan( 0, 7,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
-	plan( 0, 6,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
-	plan( 0, 5,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
+	plan( 20, 7,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
+	plan( 21, 6,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
+	plan( 22, 5,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
 	
-	plan( 0, 7,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
-	plan( 0, 6,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
-	plan( 0, 5,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
+	plan( 30, 7,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
+	plan( 31, 6,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
+	plan( 32, 5,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
 	
 	// ATTACKING
-	plan( 0, 10,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
-	plan( 0, 9,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
-	plan( 0, 8,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 100, 10,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 101, 9,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 102, 8,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
 	
-	plan( 0,   10,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
-	plan( 0, 9,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
-	plan( 0, 8,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
+	plan( 110, 10,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
+	plan( 111, 9,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
+	plan( 112, 8,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
 
-	plan( 0,   10,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 0, 9,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 0, 8,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 120,   10,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 121, 9,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 122, 8,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
 
-	plan( 0, 7,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
-	plan( 0, 6,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
-	plan( 0, 5,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
+	plan( 130, 7,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
+	plan( 131, 6,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
+	plan( 132, 5,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
 	
-	plan( 0, 7,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
-	plan( 0, 6,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
-	plan( 0, 5,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
+	plan( 140, 7,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
+	plan( 141, 6,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
+	plan( 142, 5,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
 
-	plan( 0, 7,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 0, 6,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 0, 5,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 150, 7,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 151, 6,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 152, 5,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
 	
 Plans:
 	@starcraft(hello(),_)
@@ -224,7 +224,7 @@ PC-rules:
 	
 	// ----------------------- selecting the potential plans ----------
 	// first select the most relevant plan.
-	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan) and curPriority(CurPr) | 
+	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan,_) and curPriority(CurPr) | 
 	{
 	[
 		//B(roundPriority(NewPr,RoundedPr));
@@ -320,9 +320,12 @@ PC-rules:
 	setPlan(NewPlanId, NewPlan) <- currentPlan(CurrentPlanId, CurrentPlan) and baseCP([X,Y]) and coBase(CoX, CoY) |
 	{
 	[
-		if B(not (NewPlanId = CurrentPlanId)) then {
+		if B(not (NewPlanId = CurrentPlanId)) then 
+		{
 			SetPlan(NewPlanId, NewPlan)
-		} else {
+		} 
+		else 
+		{
 			continuePlan()
 		};
 		
@@ -330,7 +333,8 @@ PC-rules:
 	]
 	}
 	
-	continuePlan() <- currentPlan(Plan) | {
+	continuePlan() <- currentPlan(CurrentPlanId,Plan) | 
+	{
 		// Plan = [subplan1, subplan2, ....]
 		skip
 	}
