@@ -122,7 +122,8 @@ public class CoopEventListener implements BWAPIEventListener
 			if (getUnitLocation(unit) == Grid.LOC_NW) 
 			{
 				_logger.info("unit at (" + unit.getX() + "," + unit.getY() + ") allocated to " + _env._agents.get(0).getName());
-				_env._agents.get(0).addUnit(unit.getID());
+				_env._agents.ge
+				t(0).addUnit(unit.getID());
 			} 
 			else 
 			{

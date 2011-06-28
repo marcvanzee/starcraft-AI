@@ -320,36 +320,44 @@ public class Env extends apapl.Environment
 												 APLList EnemyBases, APLNum WTA ) 
 	throws ExternalActionFailedException
 	{
-		double defendPriority = 0;
-		double attackPriority = 0;
+		int defendPriority = 0;
+		int attackPriority = 0;
 		
 		// first of all, look if there are enemies around
-		if (Enemies.isEmpty()) {
+		if (Enemies.isEmpty()) 
+		{
 			// is there an enemybase?
-			if (EnemyBases.isEmpty()) {
+			if (EnemyBases.isEmpty()) 
+			{
 				// there is nothing, so we will defend or attack depending on our WTA
 				// both priorities will be very low, so an important event will be able
 				// to interrupt it easily
 				
 				// the WTA has domain [0,1], so these priorities are not able to exceed 0,1
-				defendPriority = Math.random() / 10 * (1 - WTA.toDouble());
-				attackPriority = Math.random() / 10 * WTA.toDouble();
-			} else {
+				attackPriority =      (int) Math.round(Math.random() * WTA.toDouble() * 10);
+				defendPriority = 10 - attackPriority;
+			} 
+			else 
+			{
 				// there is an enemy-base, but no enemy characters: attack it!
-				attackPriority = 1;
+				attackPriority = 10;
 				defendPriority = 0;
 			}
-		} else {
+		} 
+		else 
+		{
 			// there are enemies, ohoh, better watch out
 			// first see if we are with more units
-			if (NumUnits.toInt() > NumEnemies.toInt()) {
+			if (NumUnits.toInt() > NumEnemies.toInt()/2) 
+			{
 				// attack the enemy
-				attackPriority = 1;
+				attackPriority = 10;
 				defendPriority = 0;
-			} else {
+			}
+			else {
 				// we are with less units, shit!
 				// RETREAT RETREAT!!!
-				defendPriority = 1;
+				defendPriority = 10;
 				attackPriority = 0;
 			}
 		}
