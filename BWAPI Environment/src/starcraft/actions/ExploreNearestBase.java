@@ -13,7 +13,7 @@ import FIPA.DateTime;
 
 import starcraft.BWAPICoop;
 
-public class ExploreNearestBase extends Action 
+public class ExploreNearestBase extends AbstractAction 
 {
 	private List<Integer> _usingUnits;
 	private int _myBuildingId;
@@ -24,25 +24,25 @@ public class ExploreNearestBase extends Action
 	private Point _enemyBuildingToExplore;
 	
 	private boolean _isPerformedOnce;
-	private boolean _hasReachedSpot;
+	private boolean _isDefensive;
 	
 	public static int DISTANCE_TRESHOLD_BUIlDING = 1000;
 	public static int DISTANCE_TRESHOLD_DESTINATION = 100; 
 	
-	public ExploreNearestBase(String identifier,  Collection<Integer> units, int myBuildingId, int coBuildingId)
+	public ExploreNearestBase(String identifier, boolean isJoint, boolean isDefensive, Collection<Integer> units, int myBuildingId, int coBuildingId)
 	{
-		super(identifier);
+		super(identifier, isJoint);
 		init();
 		_usingUnits.addAll(units);
 		_myBuildingId = myBuildingId;
 		_coBuidlingId = coBuildingId;
 		this._isPerformedOnce = false;
-		this._hasReachedSpot = false;
+		_isDefensive = isDefensive;
 	}
 	
-	public ExploreNearestBase(String identifier, Collection<Integer> units, int myBuildingX, int myBuildingY, int coBuildingX, int coBuildingY)
+	public ExploreNearestBase(String identifier, boolean isJoint, boolean isDefensive, Collection<Integer> units, int myBuildingX, int myBuildingY, int coBuildingX, int coBuildingY)
 	{
-		super(identifier);
+		super(identifier, isJoint);
 		init();
 		_usingUnits.addAll(units);
 		
@@ -50,7 +50,8 @@ public class ExploreNearestBase extends Action
 		_coBuildingPos = new Point(coBuildingX,coBuildingY);
 		
 		this._isPerformedOnce = false;
-		this._hasReachedSpot = false;
+		_isDefensive = isDefensive;
+
 	}
 	
 	private void init()
@@ -61,12 +62,7 @@ public class ExploreNearestBase extends Action
 	@Override
 	public int[] getInvolvedUnitIds() 
 	{
-		int[] unitIds = new int[_usingUnits.size()];
-		for(int i=0; i<unitIds.length; i++)
-		{
-			unitIds[i] = _usingUnits.get(i);
-		}
-		return unitIds;
+		return AbstractAction.toArray(_usingUnits);
 	}
 
 	private Point determineNearestEnemy(BWAPICoop bwapi)
@@ -142,7 +138,14 @@ public class ExploreNearestBase extends Action
 			if(_enemyBuildingToExplore != null)
 			for(Integer unitID : _usingUnits)
 			{
-				bwapi.move(unitID, _enemyBuildingToExplore.x, _enemyBuildingToExplore.y);
+				if(_isDefensive)
+				{
+					bwapi.move(unitID, _enemyBuildingToExplore.x, _enemyBuildingToExplore.y);
+				}
+				else
+				{
+					bwapi.attackMove(unitID, _enemyBuildingToExplore.x, _enemyBuildingToExplore.y);
+				}
 			}
 			_isPerformedOnce = true;
 					

@@ -2,10 +2,14 @@ package starcraft;
 
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import starcraft.actions.Action;
+import starcraft.actions.AbstractAction;
 import starcraft.parameters.Grid;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -24,6 +28,8 @@ public class CoopEventListener implements BWAPIEventListener
 	private Env _env;
 	private volatile boolean _gameStarted = false;
 	private volatile int _counter = 0;
+	
+	Map<String,Integer> finishedJointActions = new HashMap<String,Integer>();
 	
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
@@ -208,11 +214,32 @@ public class CoopEventListener implements BWAPIEventListener
 		enemyU = new APLList(enemyUnits);
 		enemyB = new APLList(enemyBuildings);
 
+		
+	
+		
 		for (Agent agent : _env._agents.values()) 
 		{
 			String agentName = agent.getName();
-			Set<Action> finishedActions = agent.update();
-			throwFinishedActionsEvents(finishedActions, agentName);
+			Set<AbstractAction> finishedActions = agent.update();
+			
+			for(AbstractAction action : finishedActions)
+			{
+				if(action.isJoint())
+				{
+					if(finishedJointActions.containsKey(action.getIdentity()))
+					{
+						Integer newValue = finishedJointActions.get(action.getIdentity());
+						finishedJointActions.put(action.getIdentity(), newValue);
+					}
+					else
+					{
+						finishedJointActions.put(action.getIdentity(), 1);
+					}
+					
+				}
+			}
+			throwFinishedSingleActionsEvents(finishedActions, agentName);
+			
 			
 			Point cp = agent.getCP();
 			//unitCP = new APLFunction("unitCP", new APLNum((cp != null) ? cp.x : -1), new APLNum((cp != null) ? cp.y : -1));
@@ -224,18 +251,44 @@ public class CoopEventListener implements BWAPIEventListener
 			
 			throwEvent(f, agent.getName());
 		}
+		
+		List<String> keysToRemove = new ArrayList<String>();
+		for(Entry<String,Integer> entry :  finishedJointActions.entrySet())
+		{
+			if(entry.getValue() ==  _env._agents.size())
+			{
+				keysToRemove.add(entry.getKey());
+				//joint action finished.
+				throwFinishedJointActionsEvents(entry.getKey());
+			}
+		}
+		
+		for(String key : keysToRemove)
+		{
+			finishedJointActions.remove(key);
+		}
+		
 	}
 	
-	
-	public void throwFinishedActionsEvents(Set<Action> finishedActions, String agentName)
+	public void throwFinishedJointActionsEvents(String actionIdentifier)
 	{
-		for(Action action : finishedActions)
+		APLIdent actionId = new APLIdent(actionIdentifier);
+		APLFunction function = new APLFunction("actionPerformed", actionId);
+		throwEventToAll(function);
+	}
+	
+	public void throwFinishedSingleActionsEvents(Set<AbstractAction> finishedActions, String agentName)
+	{
+		for(AbstractAction action : finishedActions)
 		{
-			System.out.println("gonna throwing actionPerfomed: " + action.getIdentity());
-			APLIdent actionId = new APLIdent(action.getIdentity());
-			APLFunction function = new APLFunction("actionPerformed", actionId);
-			System.out.println("gonna throwing actionPerfomed: " + actionId.toString() + "--" + function.toString());
-			throwEvent(function, agentName);
+			if(!action.isJoint())
+			{
+				System.out.println("gonna throwing actionPerfomed: " + action.getIdentity());
+				APLIdent actionId = new APLIdent(action.getIdentity());
+				APLFunction function = new APLFunction("actionPerformed", actionId);
+				System.out.println("gonna throwing actionPerfomed: " + actionId.toString() + "--" + function.toString());
+				throwEvent(function, agentName);
+			}
 		}
 		
 	}

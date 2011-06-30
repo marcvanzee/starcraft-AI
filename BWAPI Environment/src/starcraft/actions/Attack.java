@@ -9,25 +9,25 @@ import starcraft.BWAPICoop;
 import eisbot.proxy.model.*;
 import eisbot.proxy.types.*;
 
-public class Attack extends Action 
+public class Attack extends AbstractAction 
 {
 	private List<Integer> _usingUnits;
 	private List<Integer> _targetEnemies;
 	private Point _targetPosition;
 	private boolean _isPerformedOnce;
 	
-	public Attack(String identifier, Collection<Integer> units, int x, int y)
+	public Attack(String identifier, boolean isJoint, Collection<Integer> units, int x, int y)
 	{
-		super(identifier);
+		super(identifier, isJoint);
 		init();
 		_usingUnits.addAll(units);
 		_targetPosition.x = x;
 		_targetPosition.y = y;
 	}
 	
-	public Attack(String identifier, Collection<Integer> units, Collection<Integer> enemies)
+	public Attack(String identifier, boolean isJoint, Collection<Integer> units, Collection<Integer> enemies)
 	{
-		super(identifier);
+		super(identifier, isJoint);
 		init();
 		_usingUnits.addAll(units);
 		_targetEnemies.addAll(enemies);
@@ -40,35 +40,6 @@ public class Attack extends Action
 		_targetPosition = new Point();
 	}
 	
-	/**
-	 * 
-	 * @param units
-	 * @param amount
-	 * @param withType
-	 * @param onlyIdle
-	 * @return
-	 */
-	public static List<Unit> selectUnits(Collection<Unit> units, int amount, List<UnitType> withType, boolean onlyIdle)
-	{
-		
-		List<Unit> selectedUnits = new ArrayList<Unit>();
-		
-		for( Unit unit : units )
-		{
-			if( onlyIdle && !unit.isIdle() )
-				continue;
-			
-			if(withType.size() > 0 && !withType.contains(unit.getTypeID()))
-				continue;
-			
-			selectedUnits.add(unit);
-			
-			if(amount > 0 && selectedUnits.size() >= amount)
-				break;
-		}
-		
-		return selectedUnits;
-	}
 	
 	
 	public void perform(BWAPICoop bwapi)
@@ -112,12 +83,7 @@ public class Attack extends Action
 	
 	public int[] getInvolvedUnitIds()
 	{
-		int[] unitIds = new int[_usingUnits.size()];
-		for(int i=0; i<unitIds.length; i++)
-		{
-			unitIds[i] = _usingUnits.get(i);
-		}
-		return unitIds;
+		return AbstractAction.toArray(_usingUnits);
 	}
 	
 	/**
