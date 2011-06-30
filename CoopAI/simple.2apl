@@ -1,2 +1,5 @@
+Beliefs:
+hoi( funct(0) ).
+
 Plans:
-[ print(a); print(b); print(c) ]
+B( hoi(X) );	@starcraft(X, _)
