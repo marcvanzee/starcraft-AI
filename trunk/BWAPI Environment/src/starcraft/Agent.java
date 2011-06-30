@@ -155,11 +155,11 @@ public class Agent
 	 * - center point of units
 	 * - the health points of the base
 	 */
-	public Set<Action> update() 
+	public Set<AbstractAction> update() 
 	{
 		
 		//First execute actions in planbase.
-		Set<Action> finishedActions = _planbase.executeActions(_bwapi);
+		Set<AbstractAction> finishedActions = _planbase.executeActions(_bwapi);
 		
 		
 		//then update the belief base. Dont know if order matters.

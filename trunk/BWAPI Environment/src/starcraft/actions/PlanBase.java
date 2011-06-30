@@ -25,7 +25,7 @@ public class PlanBase
 	MinimalPlanBase _minimalPlanBase;
 	
 	//A hashmap of actions, indexed by their id.
-	private HashMap<Integer,Action> _actionsPerID;
+	private HashMap<Integer,AbstractAction> _actionsPerID;
 	
 	private int _currentActionId;
 	
@@ -64,7 +64,7 @@ public class PlanBase
 	private void init(int... unitIds)
 	{
 		_minimalPlanBase = new MinimalPlanBase(unitIds);
-		_actionsPerID = new HashMap<Integer,Action>();
+		_actionsPerID = new HashMap<Integer,AbstractAction>();
 		_currentActionId = 1;
 	}
 		
@@ -73,7 +73,7 @@ public class PlanBase
 	 * @param action The Action to perform.
 	 * @return The id of the action.
 	 */
-	public synchronized int insertReplace(Action action)
+	public synchronized int insertReplace(AbstractAction action)
 	{
 		int actionId = _currentActionId;
 		_currentActionId++;
@@ -89,7 +89,7 @@ public class PlanBase
 	 * @param action The Action to perform.
 	 * @return The id of the action.
 	 */
-	public synchronized int insertFirst(Action action)
+	public synchronized int insertFirst(AbstractAction action)
 	{
 		int actionId = _currentActionId;
 		_currentActionId++;
@@ -105,7 +105,7 @@ public class PlanBase
 	 * @param action The Action to perform.
 	 * @return The id of the action.
 	 */
-	public synchronized int insertLast(Action action)
+	public synchronized int insertLast(AbstractAction action)
 	{
 		int actionId = _currentActionId;
 		_currentActionId++;
@@ -121,7 +121,7 @@ public class PlanBase
 	 * @param action The Action to perform.
 	 * @return The id of the action.
 	 */
-	public synchronized int insertOnlyWhenIdle(Action action)
+	public synchronized int insertOnlyWhenIdle(AbstractAction action)
 	{
 		int actionId = _currentActionId;
 		_currentActionId++;
@@ -138,15 +138,15 @@ public class PlanBase
 	 * An action is executed each updateCycle till it is finished. 
 	 * Returns a set of all actions that are finished.
 	 */
-	public synchronized Set<Action> executeActions(BWAPICoop bwapi)
+	public synchronized Set<AbstractAction> executeActions(BWAPICoop bwapi)
 	{
 		Set<Integer> actionIds = _minimalPlanBase.getActionsToExecute();
 		Set<Integer> finishedActionIds = new HashSet<Integer>();
-		Set<Action> finishedActions = new HashSet<Action>();
+		Set<AbstractAction> finishedActions = new HashSet<AbstractAction>();
 		
 		for(int actionId : actionIds)
 		{
-			Action action = _actionsPerID.get(actionId);
+			AbstractAction action = _actionsPerID.get(actionId);
 			if(action != null)
 			{
 				action.perform(bwapi);

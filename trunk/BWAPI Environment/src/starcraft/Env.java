@@ -7,8 +7,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import starcraft.actions.Action;
+import starcraft.actions.AbstractAction;
 import starcraft.actions.Attack;
+import starcraft.actions.DefendBuildingAction;
 import starcraft.actions.ExploreNearestBase;
 import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
@@ -277,40 +278,95 @@ public class Env extends apapl.Environment
 	*/
 	
 	
-	public synchronized Term explore(String agentName, APLIdent actionIdentifier, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
+	public synchronized Term defendBuilding(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum buildingX, APLNum buildingY) throws ExternalActionFailedException
 	{
 		try
 		{
-		//Dirty hack
-		Agent agent = _agents.get(agentName);
-		Action exploreAction = new ExploreNearestBase(actionIdentifier.toString(), agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
-		agent.getPlanBase().insertReplace(exploreAction);
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
+			
+			Agent agent = _agents.get(agentName);
+			AbstractAction defendAction = new DefendBuildingAction(actionIdentifier.toString(), isJoint, agent.getUnits(), buildingX.toInt(), buildingY.toInt());
+			agent.getPlanBase().insertReplace(defendAction);
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
-		System.out.println("EXPLORED EXPLORED EXPLORED XPLORED XPLORED");
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term attackPos( String agentName, APLIdent actionIdentifier, APLNum x, APLNum y) throws ExternalActionFailedException
+	public synchronized Term exploreDefensive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
 	{
-		Agent agent = _agents.get(agentName);
-		Action attackAction = new Attack(actionIdentifier.toString(), agent.getUnits(), x.toInt(), y.toInt());
-		agent.getPlanBase().insertReplace(attackAction);
+		try
+		{
+			// ActionType does not matter, since for single and joint defendBuilding is the same.
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
+			boolean isDefensive = true;
+			Agent agent = _agents.get(agentName);
+			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
+			agent.getPlanBase().insertReplace(exploreAction);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term attackPos(String agentName, APLIdent actionIdentifier, APLNum unitId )
+	public synchronized Term exploreAggresive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
 	{
-		Agent agent = _agents.get(agentName);
-
-		List<Integer> units = new ArrayList<Integer>();
-		units.add(unitId.toInt());
+		try
+		{
+			// ActionType does not matter, since for single and joint defendBuilding is the same.
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
+			boolean isDefensive = false;
+			Agent agent = _agents.get(agentName);
+			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
+			agent.getPlanBase().insertReplace(exploreAction);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return wrapBoolean(true);
+	}
+	
+	public synchronized Term attackPos( String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum x, APLNum y) throws ExternalActionFailedException
+	{
+		try
+		{
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
 		
-		Action  attackAction  = new Attack(actionIdentifier.toString(), agent.getUnits(), units);
-		agent.getPlanBase().insertReplace(attackAction);
+			Agent agent = _agents.get(agentName);
+			AbstractAction attackAction = new Attack(actionIdentifier.toString(), isJoint, agent.getUnits(), x.toInt(), y.toInt());
+			agent.getPlanBase().insertReplace(attackAction);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+			
+			return wrapBoolean(true);
+	}
+	
+	public synchronized Term attackUnit(String agentName, APLIdent actionIdentifier,  APLIdent actionType, APLNum unitId )
+	{
+		try
+		{
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
+			
+			Agent agent = _agents.get(agentName);
+			List<Integer> units = new ArrayList<Integer>();
+			units.add(unitId.toInt());
+			
+			AbstractAction  attackAction  = new Attack(actionIdentifier.toString(), isJoint, agent.getUnits(), units);
+			agent.getPlanBase().insertReplace(attackAction);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
 		return wrapBoolean(true);
 	}
 	
