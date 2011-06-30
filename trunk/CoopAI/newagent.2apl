@@ -34,34 +34,39 @@
 
 BeliefUpdates:
 	// initial beliefs, when game starts
-	{true} 				SetTeamMate(X) 		{teamMate(X)}
-	{true} 				SetWta(X) 			{wta(X), wtaTresholdInUnits(2*X)}
-	{true} 				SetUnits(X)			{numUnits(X)}
-	{true}				SetBaseCP(Pos)		{baseCP(Pos)}									// Pos = [X,Y]
-	{true}				SetCoBase(X,Y)		{coBase(X,Y)}
+	{true} 					SetTeamMate(X) 		{teamMate(X)}
+	{true} 					SetWta(X) 			{wta(X), wtaTresholdInUnits(2*X)}
+	{true} 					SetUnits(X)			{numUnits(X)}
+	{true}					SetBaseCP(Pos)		{baseCP(Pos)}									// Pos = [X,Y]
+	{true}					SetCoBase(X,Y)		{coBase(X,Y)}
 	
 	// updated beliefs, when game updates
-	{numUnits(X)}		DestroyUnit()		{not numUnits(X), numUnits(X-1)}
-	{baseHP(X)}			SetBaseHP(Y)		{not baseHP(X), baseHP(Y)}
-	{ownCP(Pos)}		SetOwnCP(PosNew)	{not ownCP(Pos), ownCP(PosNew)}					// Pos,PosNew = [X,Y]
-	{numEnemies(X)}		SetNumEnemies(Y)	{not numEnemies(X), numEnemies(Y) }
-	{enemies(Pos)}		SetEnemies(PosNew)	{not enemies(Pos), enemies(PosNew)}
-	{enemyBases(L)}		SetEnemyBases(Lnew)	{not enemyBases(L), enemyBases(Lnew)}
+	{numUnits(X)}			DestroyUnit()		{not numUnits(X), numUnits(X-1)}
+	{baseHP(X)}				SetBaseHP(Y)		{not baseHP(X), baseHP(Y)}
+	{ownCP(Pos)}			SetOwnCP(PosNew)	{not ownCP(Pos), ownCP(PosNew)}					// Pos,PosNew = [X,Y]
+	{numEnemies(X)}			SetNumEnemies(Y)	{not numEnemies(X), numEnemies(Y) }
+	{enemies(Pos)}			SetEnemies(PosNew)	{not enemies(Pos), enemies(PosNew)}
+	{enemyBases(L)}			SetEnemyBases(Lnew)	{not enemyBases(L), enemyBases(Lnew)}
 	
 	// other beliefs, for internal processing
-	{true}				SetBusy()			{busy}
-	{true}				SetIdle()			{not busy}
-	{subgoal(X,Y)}		SetSubgoal(X1,Y1)	{not subgoal(X,Y), subgoal(X1,Y1)}
-	{curPriority(X)}	RememberPriority(Y)	{not curPriority(X), curPriority(Y)}
+	{true}					SetBusy()			{busy}
+	{true}					SetIdle()			{not busy}
+	{subgoal(X,Y)}			SetSubgoal(X1,Y1)	{not subgoal(X,Y), subgoal(X1,Y1)}
+	{curPriority(X)}		RememberPriority(Y)	{not curPriority(X), curPriority(Y)}
 	
-	{currentPlan(Id,X)}	SetPlan(IdNew,Y)	{not currentPlan(Id, X), currentPlan(IdNew, Y)}
-	{newPlan(X)}		SetNewPlan(X2)		{not newPlan(X), newPlan(X2)}
+	{currentPlan(Id,X1,X2)}	SetPlan(IdNew,Y1,Y2){not currentPlan(Id, X1,X2), currentPlan(IdNew, Y1,Y2)}
+	{newPlan(X)}			SetNewPlan(X2)		{not newPlan(X), newPlan(X2)}
+	{currentPlan(Id,X1,X2)} PlanFinished()		{not currentPlan(Id, X1,X2), currentPlan(0,[],0)}
 	
-	{coPlan(X)}			SetCoPlan(Y)		{not coPlan(X), coPlan(Y)}
+	{coPlan(X)}				SetCoPlan(Y)		{not coPlan(X), coPlan(Y)}
 	
-	{true}				PlanShared()		{planShared}
-	{true}				PlanRcvd()			{planRcvd}
-	{true}				ResetComm()			{not planShared, not planRcvd}
+	// communication
+	{true}					PlanShared()		{planShared}
+	{true}					PlanRcvd()			{planRcvd}
+	{jointActFinished(X)}	JointActFinsh()		{not jointActFinished(X), jointActFinished(1)}
+	
+	{true}					ResetComm()			{not planShared, not planRcvd}
+	{jointActFinished(X)}	ResetJointAct()		{not jointActFinished(X), jointActFinished(0)}	
 
 Beliefs:
 // beliefs required for belief updates
@@ -75,9 +80,10 @@ Beliefs:
 	curPriority(0).
 	
 	newPlan(0).
-	currentPlan(0,[]).
+	currentPlan(0,[],0). // currentPlan(Id,Plan,Subgoal)
 	
 	coPlan(0).
+	jointPlanFinished(0).
 	
 	wtaTresHoldToAttack(0.5).
 	
@@ -90,28 +96,9 @@ Beliefs:
 	weakestBase([[H1,H2],[K1,K2]|T],New,M) :-
     	H2 > K2,
     	weakestBase([[K1,K2]|T],New,M).
-    	
-	
-	// DIT WAS FRANK ZIJN IDEE, MARC VIND HET EEN SLECHT IDEE
-	// Frank vind dat het weg kan.
-	// roundPriority( Pr,   1 ) :- (Pr > 0.95).
-	// roundPriority( Pr, 0.9 ) :- (Pr > 0.85).
-	// roundPriority( Pr, 0.8 ) :- (Pr > 0.75).
-	// roundPriority( Pr, 0.7 ) :- (Pr > 0.65).
-	// roundPriority( Pr, 0.6 ) :- (Pr > 0.55).
-	// roundPriority( Pr, 0.5 ) :- (Pr > 0.45).
-	// roundPriority( Pr, 0.4 ) :- (Pr > 0.35).
-	// roundPriority( Pr, 0.3 ) :- (Pr > 0.25).
-	// roundPriority( Pr, 0.2 ) :- (Pr > 0.15).
-	// roundPriority( Pr, 0.1 ) :- (Pr > 0.5).
-	// roundPriority( _, 0 ).
 
-	selectPlan(NewPlanId, NewPr, Subgoal) :-
-		plan(NewPlanId, NewPr, Subgoal, _ , _).
-	
-	//selectSinglePlan(X) :- is(X,1) :-
-	//	roundPriority(NewPr, NewPrRounded),
-	//	plan(NewPlanId, NewPrRounded, single, Subgoal, _ ).
+	selectPlan(PlanId, Pr, Subgoal) :-
+		plan(PlanId, Pr, Subgoal, _ , _).
 
 	// description of the plans: plan(Identifier, Priority, Joint, Subgoal, Plan), where
 	// Identifier: 	a number denoting the unique identity of the plan
@@ -121,46 +108,46 @@ Beliefs:
 	// plan ( id, priority, subgoal, jointPlan, singlePlan )
 	
 	// DEFENDING
-	plan( 0, 10,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
-	plan( 1, 9,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
-	plan( 2, 8,	defend, [defendOwnBuilding], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X < Y/2).
+	plan( 0,10, 	defend, [defendBuilding(P,joint)], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X < Y/2), ownCP(P).
+	plan( 1, 9,		defend, [defendBuilding(P,joint)], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X < Y/2), ownCP(P).
+	plan( 2, 8,		defend, [defendBuilding(P,joint)], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X < Y/2), ownCP(P).
 	
-	plan( 10, 10,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
-	plan( 11, 9,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
-	plan( 12, 8,	defend, [], [defendOwnBuilding] ) :- numUnits(X), numEnemies(Y), (X >= Y/2).
+	plan( 10, 10,	defend, [], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X >= Y/2), ownCP(P).
+	plan( 11, 9,	defend, [], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X >= Y/2), ownCP(P).
+	plan( 12, 8,	defend, [], [defendBuilding(P,single)] ) :- numUnits(X), numEnemies(Y), (X >= Y/2), ownCP(P).
 
-	plan( 20, 7,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
-	plan( 21, 6,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
-	plan( 22, 5,	defend, [], [defendOwnBuilding] ) :- enemyBases(X), not( X = []).
+	plan( 20, 7,	defend, [], [defendBuilding(P,single)] ) :- enemyBases(X), not( X = []), ownCP(P).
+	plan( 21, 6,	defend, [], [defendBuilding(P,single)] ) :- enemyBases(X), not( X = []), ownCP(P).
+	plan( 22, 5,	defend, [], [defendBuilding(P,single)] ) :- enemyBases(X), not( X = []), ownCP(P).
 	
-	plan( 30, 7,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
-	plan( 31, 6,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
-	plan( 32, 5,	defend, [], [exploreDefensive, defendOwnBuilding] ) :- enemyBases(X), (X = []).
+	plan( 30, 7,	defend, [], [exploreDefensive] ) :- enemyBases(X), (X = []).
+	plan( 31, 6,	defend, [], [exploreDefensive] ) :- enemyBases(X), (X = []).
+	plan( 32, 5,	defend, [], [exploreDefensive] ) :- enemyBases(X), (X = []).
 	
 	// ATTACKING
-	plan( 100, 10,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
-	plan( 101, 9,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
-	plan( 102, 8,	attack, [attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 100,10,	attack, [gatherForAttackBuilding(X,joint), attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 101, 9,	attack, [gatherForAttackBuilding(X,joint), attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
+	plan( 102, 8,	attack, [gatherForAttackBuilding(X,joint), attack(X)], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits >= Z/2).
 	
-	plan( 110, 10,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
+	plan( 110,10,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
 	plan( 111, 9,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
 	plan( 112, 8,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), numUnits(Y), numEnemies(Z), (Y+wtaTresholdInUnits < Z/2).
 
-	plan( 120,   10,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 121, 9,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 122, 8,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 120,10,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
+	plan( 121, 9,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
+	plan( 122, 8,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
 
 	plan( 130, 7,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
 	plan( 131, 6,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
 	plan( 132, 5,	attack, [], [attackEnemyBuilding(X)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta >= wtaTresholdToAttack.
 	
-	plan( 140, 7,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
-	plan( 141, 6,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
-	plan( 142, 5,	attack, [], [defendOwnBuilding] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack.
+	plan( 140, 7,	attack, [], [defendBuilding(P)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack, ownCP(P).
+	plan( 141, 6,	attack, [], [defendBuilding(P)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack, ownCP(P).
+	plan( 142, 5,	attack, [], [defendBuilding(P)] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X), wta < wtaTresholdToAttack, ownCP(P).
 
-	plan( 150, 7,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 151, 6,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
-	plan( 152, 5,	attack, [], [exploreAggressive, attack] ) :- enemyBases(L), (L = []).
+	plan( 150, 7,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
+	plan( 151, 6,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
+	plan( 152, 5,	attack, [], [exploreAggressive] ) :- enemyBases(L), (L = []).
 	
 Plans:
 	@starcraft(hello(),_)
@@ -224,13 +211,10 @@ PC-rules:
 	
 	// ----------------------- selecting the potential plans ----------
 	// first select the most relevant plan.
-	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) and currentPlan(CurrentPlan,_) and curPriority(CurPr) | 
+	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) | 
 	{
 	[
-		//B(roundPriority(NewPr,RoundedPr));
-		//print(roundedPriority(RoundedPr));
 		B(selectPlan(NewPlanId, NewPr, Subgoal));
-		print(selectPlan(NewPlanId,NewPr));
 		
 		SetNewPlan(NewPlanId);
 		
@@ -240,7 +224,7 @@ PC-rules:
 	}
 	
 	// ----------------------- sharing a plan, sending and receiving ----------
-	sharePlans(_) <- newPlan(NewPlanId) and plan(NewPlanId, _, _, _, _) and teamMate(TeamMate) | {
+	sharePlans(_) <- newPlan(NewPlanId) and teamMate(TeamMate) | {
 	[
 		send( TeamMate, inform, plan(NewPlanId) );
 		PlanShared()
@@ -262,6 +246,9 @@ PC-rules:
 					coPlan(CoPlanId) 	and plan(CoPlanId, CoPr, CoSubgoal, CoJointPlan, CoSinglePlan) |
 	{
 	[
+		print(releavantplan(0));
+		ResetComm();
+		
 		if B(not (OwnJointPlan = [])) then 
 		{
 			if B(not (CoJointPlan = [])) then
@@ -270,31 +257,31 @@ PC-rules:
 				{
 					if B(not (CoSubgoal = defend)) then
 					{
-						setPlan(OwnPlanId, OwnJointPlan)
+						setPlan(OwnPlanId, OwnJointPlan, joint)
 					} else {
-						setPlan(OwnPlanId, OwnSinglePlan)
+						setPlan(OwnPlanId, OwnSinglePlan, single)
 					}
 				} else if B(OwnPr = CoPr) then 
 				{
-					setPlan(OwnPlanId, OwnSinglePlan)
+					setPlan(OwnPlanId, OwnSinglePlan, single)
 				} else 
 				{
 					if B(not (OwnSubgoal = defend)) then
 					{
-						setPlan(CoPlanId, CoJointPlan)
+						setPlan(CoPlanId, CoJointPlan, joint)
 					} else
 					{
-						setPlan(OwnPlanId, OwnSinglePlan)
+						setPlan(OwnPlanId, OwnSinglePlan, single)
 					}
 				}
 			} else
 			{
 				if B(OwnPr < CoPr and not (CoSubgoal = defend)) then
 				{
-					setPlan(OwnPlanId, OwnJointPlan)
+					setPlan(OwnPlanId, OwnJointPlan, joint)
 				} else
 				{
-					setPlan(OwnPlanId, OwnSinglePlan)
+					setPlan(OwnPlanId, OwnSinglePlan, single)
 				}
 			}
 		} else
@@ -303,40 +290,61 @@ PC-rules:
 			{
 				if B(CoPriority =< OwnPriority) then
 				{
-					setPlan(OwnPlanId, OwnSinglePlan)
+					setPlan(OwnPlanId, OwnSinglePlan, single)
 				} else
 				{
-					setPlan(CoPlanId, CoJointPlan)
+					setPlan(CoPlanId, CoJointPlan, joint)
 				}
 			} else
 			{
-				setPlan(OwnPlanId, OwnSinglePlan)
+				setPlan(OwnPlanId, OwnSinglePlan, single)
 			}
 		}
 	]
 	}
 	
 	// ----------------------- execution of plan; only if it differs from the current plan -----------------
-	setPlan(NewPlanId, NewPlan) <- currentPlan(CurrentPlanId, CurrentPlan) and baseCP([X,Y]) and coBase(CoX, CoY) |
+	setPlan(NewPlanId, NewPlan, NewPlanType) <- currentPlan(CurrentPlanId, CurrentPlan, CurrentPlanType) |
 	{
 	[
 		if B(not (NewPlanId = CurrentPlanId)) then 
 		{
-			SetPlan(NewPlanId, NewPlan)
-		} 
-		else 
-		{
-			continuePlan()
+			SetPlan(NewPlanId, NewPlan, NewPlanType);
+			executeFirstAction()
 		};
 		
 		SetIdle()
 	]
 	}
 	
-	continuePlan() <- currentPlan(CurrentPlanId,Plan) | 
+	executeFirstAction() <- currentPlan(PlanId, Plan, PlanType) | 
 	{
-		// Plan = [subplan1, subplan2, ....]
-		skip
+		// first check whether the plan is not empty
+		if B( Plan = [Action|Rest] ) then 
+		{
+			performAction(Action);
+			SetPlan(PlanId, Rest, PlanType)
+		} else
+		{
+			PlanFinished()
+		}
+	}
+
+	executeFirstJointAction() <- currentPlan( PlanId, Plan, joint ) and jointActFinished(1) | 
+	{
+	[
+		if B(Plan = [Action|Rest]) then 
+		{
+			performAction(Action);
+			SetPlan(PlanId, Rest, joint);
+			ResetJointAct()
+		}
+	]
+	}
+	
+	performAction(Action) <- true |
+	{
+		@starcraft(action(Action), _)
 	}
 	
 	event( ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
@@ -350,5 +358,23 @@ PC-rules:
 		SetCoBase( CoBaseX , CoBaseY )
 	}
 	
+	message( TeamMate, inform, _, _, jointActFinished( PlanId ) ) <- teamMate( TeamMate ) | 
+	{
+	[
+		JointActFinsh()
+	]
+	}
 	
-	// ------ TODO: implement events that catch the plan information
+	event( actionPerformed( PlanId ), starcraft ) <- currentPlan( PlanId, Plan, PlanType ) and
+										teamMate(TeamMate) | 
+	{
+		// if we finished an action thats was part of a joint plan, tell the other agent we finished
+		if B(PlanType = joint) then 
+		{
+			send( TeamMate, inform, jointActFinished(PlanId ) );
+			executeFirstJointAction()
+		} else
+		{
+			executeFirstAction()
+		}
+	}
