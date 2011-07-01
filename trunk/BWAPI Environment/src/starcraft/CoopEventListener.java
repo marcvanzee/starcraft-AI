@@ -207,7 +207,7 @@ public class CoopEventListener implements BWAPIEventListener
 			} else if (enemy.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
 			{
 				countBuildings++;
-				enemyBuildings.add(new APLList(new APLNum(enemy.getX()), new APLNum(enemy.getY()), new APLNum(enemy.getHitPoints())));;
+				enemyBuildings.add(new APLList(new APLNum(enemy.getID()), new APLNum(enemy.getHitPoints())));;
 			}
 		}
 
@@ -246,7 +246,7 @@ public class CoopEventListener implements BWAPIEventListener
 			unitCP = new APLList(new APLNum(cp.x) ,new APLNum(cp.y));
 			baseHP = new APLNum(agent.getBaseHP());
 			numEnemies = new APLNum(countEnemies);
-						
+
 			APLFunction f = new APLFunction("gameUpdate", unitCP, baseHP, numEnemies, enemyU, enemyB);
 			
 			throwEvent(f, agent.getName());

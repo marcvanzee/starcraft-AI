@@ -43,7 +43,8 @@ public class MinimalPlanBase
 		{
 			for(int unitId : unitIds)
 			{
-				_units.remove(unitId);
+				if(map.containsKey(unitId))
+					map.remove(unitId);
 			}
 		}
 		
@@ -292,14 +293,14 @@ public class MinimalPlanBase
 		
 		MinimalPlanBase a = new MinimalPlanBase(1,2,3,4,5);
 		a.insertFirst(1, 1,2,3);
-		System.out.println(a);
+		//System.out.println(a);
 		a.insertFirst(2, 1,4,5);
-		System.out.println(a);
+		//System.out.println(a);
 		a.insertFirst(3, 2,3);
-		System.out.println(a);
-		System.out.println("action finsiehd 3");
+		//System.out.println(a);
+		//System.out.println("action finsiehd 3");
 		a.actionsFinished(3);
-		System.out.println(a);
+		//System.out.println(a);
 		a.insertFirst(4, 1,3,5);
 		//
 		a.insertLast(5, 4,5);
