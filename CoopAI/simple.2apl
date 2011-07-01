@@ -1,5 +1,2 @@
-Beliefs:
-hoi( funct(0) ).
-
 Plans:
-B( hoi(X) );	@starcraft(X, _)
+@starcraft(tb([test,0]), _)
