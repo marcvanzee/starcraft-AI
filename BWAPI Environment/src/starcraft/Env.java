@@ -277,6 +277,26 @@ public class Env extends apapl.Environment
 	}
 	*/
 	
+	// kijk frank zie je hoe ik de accolades goed doe?
+	public synchronized Term action(String agentName, APLList args) throws ExternalActionFailedException
+	{
+		LinkedList<Term> l = args.toLinkedList();
+		System.out.println(agentName + " performs action " + l.get(0));
+		String action = l.get(0).toString();
+		
+		if (action.equals("defendBuilding") && (l.size() ==  5))
+			return defendBuilding(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4)); 
+		else if (action.equals("exploreDefensive") && (l.size() ==  7)) 
+			return exploreDefensive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4), (APLNum)l.get(5), (APLNum)l.get(6));
+		else if (action.equals("exploreAggressive") && (l.size() ==  7))
+			return exploreAggressive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4), (APLNum)l.get(5), (APLNum)l.get(6));
+		else if (action.equals("attackPos") && (l.size() ==  5))
+			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
+		else if (action.equals("attackUnit") && (l.size() ==  5))
+			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
+		else
+			return wrapBoolean(false);
+	}
 	
 	public synchronized Term defendBuilding(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum buildingX, APLNum buildingY) throws ExternalActionFailedException
 	{
@@ -313,7 +333,7 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term exploreAggresive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
+	public synchronized Term exploreAggressive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
 	{
 		try
 		{

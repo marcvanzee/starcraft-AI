@@ -43,6 +43,12 @@ public class ExploreNearestBase extends AbstractAction
 	public ExploreNearestBase(String identifier, boolean isJoint, boolean isDefensive, Collection<Integer> units, int myBuildingX, int myBuildingY, int coBuildingX, int coBuildingY)
 	{
 		super(identifier, isJoint);
+		if (units.size() > 0) {
+			for (int unit : units) {
+				System.out.println("-------------- ");
+				System.out.println("unit: " + unit);
+			}
+		}
 		init();
 		_usingUnits.addAll(units);
 		
