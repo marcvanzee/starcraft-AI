@@ -278,30 +278,41 @@ public class Env extends apapl.Environment
 	*/
 	
 	// kijk frank zie je hoe ik de accolades goed doe?
+	// Ja, ik zie het! Goed bezig ;)
 	public synchronized Term action(String agentName, APLList args) throws ExternalActionFailedException
 	{
+		try
+		{
 		LinkedList<Term> l = args.toLinkedList();
-		System.out.println(agentName + " performs action " + l.get(0));
+		System.out.println(agentName + " performs action " + l);
 		String action = l.get(0).toString();
 		
 		if (action.equals("defendBuilding") && (l.size() ==  5))
 			return defendBuilding(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4)); 
-		else if (action.equals("exploreDefensive") && (l.size() ==  7)) 
-			return exploreDefensive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4), (APLNum)l.get(5), (APLNum)l.get(6));
-		else if (action.equals("exploreAggressive") && (l.size() ==  7))
-			return exploreAggressive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4), (APLNum)l.get(5), (APLNum)l.get(6));
+		else if (action.equals("exploreDefensive") && (l.size() ==  3)) 
+			return exploreDefensive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2));
+		else if (action.equals("exploreAggressive") && (l.size() ==  3))
+			return exploreAggressive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2));
 		else if (action.equals("attackPos") && (l.size() ==  5))
 			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
 		else if (action.equals("attackUnit") && (l.size() ==  5))
 			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
 		else
 			return wrapBoolean(false);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return wrapBoolean(false);
 	}
 	
 	public synchronized Term defendBuilding(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum buildingX, APLNum buildingY) throws ExternalActionFailedException
 	{
 		try
 		{
+			System.out.println("In defendBuilding");
+			
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
 			
 			Agent agent = _agents.get(agentName);
@@ -315,15 +326,18 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term exploreDefensive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
+	public synchronized Term exploreDefensive(String agentName, APLIdent actionIdentifier, APLIdent actionType) throws ExternalActionFailedException
 	{
 		try
 		{
+			System.out.println("In exploreDefensive");
 			// ActionType does not matter, since for single and joint defendBuilding is the same.
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
 			boolean isDefensive = true;
 			Agent agent = _agents.get(agentName);
-			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
+			Point basePos = agent.getBasePos();
+			Point coBasePos = agent.getCoBasePos();
+			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), basePos.x, basePos.y, coBasePos.x, coBasePos.y);
 			agent.getPlanBase().insertReplace(exploreAction);
 		}
 		catch(Exception e)
@@ -333,15 +347,16 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term exploreAggressive(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum myX, APLNum myY, APLNum coX, APLNum coY) throws ExternalActionFailedException
+	public synchronized Term exploreAggressive(String agentName, APLIdent actionIdentifier, APLIdent actionType) throws ExternalActionFailedException
 	{
 		try
 		{
-			// ActionType does not matter, since for single and joint defendBuilding is the same.
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
 			boolean isDefensive = false;
 			Agent agent = _agents.get(agentName);
-			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), myX.toInt(), myY.toInt(), coX.toInt(), coY.toInt());
+			Point basePos = agent.getBasePos();
+			Point coBasePos = agent.getCoBasePos();
+			AbstractAction exploreAction = new ExploreNearestBase(actionIdentifier.toString(), isJoint, isDefensive, agent.getUnits(), basePos.x, basePos.y, coBasePos.x, coBasePos.y);
 			agent.getPlanBase().insertReplace(exploreAction);
 		}
 		catch(Exception e)
@@ -356,7 +371,6 @@ public class Env extends apapl.Environment
 		try
 		{
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
-		
 			Agent agent = _agents.get(agentName);
 			AbstractAction attackAction = new Attack(actionIdentifier.toString(), isJoint, agent.getUnits(), x.toInt(), y.toInt());
 			agent.getPlanBase().insertReplace(attackAction);
@@ -374,7 +388,6 @@ public class Env extends apapl.Environment
 		try
 		{
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
-			
 			Agent agent = _agents.get(agentName);
 			List<Integer> units = new ArrayList<Integer>();
 			units.add(unitId.toInt());
@@ -390,7 +403,7 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term allocatePriorities( String agentName, APLList BaseCP, APLNum BaseHP, 
+	public synchronized Term allocatePriorities( String agentName, APLNum baseX, APLNum baseY, APLNum BaseHP, 
 												 APLNum NumUnits, APLList UnitCP, 
 												 APLNum NumEnemies, APLList Enemies, 
 												 APLList EnemyBases, APLNum WTA ) 
