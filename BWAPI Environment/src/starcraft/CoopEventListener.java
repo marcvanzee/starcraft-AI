@@ -76,29 +76,38 @@ public class CoopEventListener implements BWAPIEventListener
 	 */
 	private void init2APLAgents() 
 	{
-		APLNum units, wta;
-		Unit u;
-		APLList base;
+		APLNum units, wta, baseX, baseY, coBaseX,coBaseY;
 		
 		for (Agent agent : _env._agents.values()) 
 		{
 			units = new APLNum(agent.countUnits());
 			wta   = new APLNum(agent.getWTA());
-			u     = _env._bwapi.getUnit(agent.getBuilding());
-			base  = new APLList(new APLNum(u.getX()), new APLNum(u.getY()));
+			baseX = new APLNum(agent.getBasePos().x);
+			baseY = new APLNum(agent.getBasePos().y);
+			coBaseX = new APLNum(agent.getCoBasePos().x);
+			coBaseY = new APLNum(agent.getCoBasePos().y);
 			
-			APLFunction f = new APLFunction("gameStarted", wta, units, base);
+			APLFunction f = new APLFunction("gameStarted", wta, units, baseX, baseY, coBaseX,coBaseY);
 			throwEvent(f, agent.getName());
 		}
 	}
 	
+	
+	
 	private void distributeUnits() 
 	{
-		
+		String agentName1 = "officer1";
+		String agentName2 = "officer2";
+	
 		ArrayList<Unit> myUnits = _env._bwapi.getMyUnits();
 		
 		for (Unit unit : myUnits) 
 		{
+			
+			String thisAgent = unit.getX() < 1000 ? agentName1 : agentName2;
+			String otherAgent = unit.getX() < 1000 ? agentName2 : agentName1;
+			
+			
 			//_logger.info("In loop");
 			
 			// <Marc> TODO: distribution is not correct, something goes wrong with the
@@ -106,20 +115,12 @@ public class CoopEventListener implements BWAPIEventListener
 			// Temporarily (ugly) fix:
 			if (unit.getTypeID() == UnitTypes.Terran_Marine.ordinal()) 
 			{
-				_env._agents.get
-						(
-								(unit.getX() < 1000) ?
-								"officer1" : "officer2"
-						)
-						.addUnit(unit.getID());
-			} else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
-			{
-				_env._agents.get
-				(
-						(unit.getX() < 1000) ?
-						"officer1" : "officer2"
-				)
-				.addBuilding(unit.getID(), unit.getX(), unit.getY());
+				_env._agents.get(thisAgent).addUnit(unit.getID());
+			} 
+			else if (unit.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
+			{	
+				_env._agents.get(thisAgent).addBuilding(unit.getID(), unit.getX(), unit.getY());
+				_env._agents.get(otherAgent).setCoBase(unit.getX(), unit.getY());
 			}
 			
 			// this needs to be checked

@@ -21,7 +21,7 @@ public class Agent
 	private double _WTA;
 	private PlanBase _planbase;
 	private Point _basePos = new Point();
-	
+	private Point _coBasePos = new Point();
 	/**
 	 * Constructor
 	 * 
@@ -54,6 +54,11 @@ public class Agent
 	{
 		_base = unitID;
 		_basePos = new Point(X,Y);
+	}
+	
+	public void setCoBase(int X, int Y)
+	{
+		_coBasePos = new Point(X,Y);
 	}
 	
 	/**
@@ -225,6 +230,11 @@ public class Agent
 	public Point getBasePos()
 	{
 		return _basePos;
+	}
+	
+	public Point getCoBasePos()
+	{
+		return _coBasePos;
 	}
 	
 	public int getBaseHP() 
