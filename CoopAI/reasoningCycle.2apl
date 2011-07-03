@@ -36,6 +36,10 @@ PC-rules:
 		
 		SetNewPlan(NewPlanId);
 		
+		B(plan( NewPlanId, _,	_, JointPlan, SinglePlan ) );
+		
+		@starcraft(selectedPlan(NewPlanId,JointPlan,SinglePlan), _);
+		
 		sharePlans(0);
 		selectRelevantPlan(0)
 	]
@@ -120,7 +124,10 @@ PC-rules:
 		if B(not (NewPlanId = CurrentPlanId)) then 
 		{
 			SetPlan(NewPlanId, NewPlan, NewPlanType);
+			@starcraft(newPlan(NewPlan));
 			executeFirstAction()
+		} else {
+			@starcraft(continuePlan())
 		};
 		
 		SetIdle()
@@ -169,6 +176,9 @@ PC-rules:
 	{
 	[
 		SetCoPlan(CoPlanId);
+		
+		@starcraft(receivedPlan(), _);
+		
 		PlanRcvd()
 	]
 	}
