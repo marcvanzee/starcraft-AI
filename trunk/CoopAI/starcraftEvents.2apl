@@ -1,0 +1,61 @@
+PC-rules:
+
+ 	//----------------------- game initializes -------------------------------------------
+	event(gameStarted( Wta, Units, BaseX, BaseY, CoBaseX, CoBaseY ), starcraft) <- true |
+	{
+	[
+		SetWta(Wta);
+		SetUnits(Units);
+		SetBaseCP(BaseX,BaseY);
+		SetCoBaseCP(CoBaseX,CoBaseY);
+		print(gamestarted(BaseX,BaseY,CoBaseX,CoBaseY))
+	]
+	}
+	
+	// ----------------------- game update cycle ---------------------------
+	event(gameUpdate( UnitCP, BaseHP, NumEnemies, EnemyUnitList, EnemyBuildingList ), starcraft) <- wta(WTA) and not busy |
+	{
+	[
+		SetBusy();
+		
+		// receive all information
+		SetOwnCP(UnitCP);
+		SetBaseHP(BaseHP);
+		SetNumEnemies(NumEnemies);
+		SetEnemies(EnemyUnitList);
+		SetEnemyBases(EnemyBuildingList);
+		
+		// advance to next reasoning step
+		determineSubgoals(0)
+	]
+	}
+	
+	// ----------------------- trigger when own unit is destroyed. ----------------------------
+	event( ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
+	{
+		DestroyUnit()
+	}
+	
+	// ----------------------- Event from teamMate with info. -------------------------------
+	event( teamMate( Teammate, CoBaseX, CoBaseY ), starcraft ) <- true |
+	{
+		SetTeamMate( Teammate );
+		SetCoBaseCP( CoBaseX , CoBaseY )
+	}
+	
+	// ----------------------- Thrown by environment indicating an action is finished. -------
+	event( actionPerformed( PlanId ), starcraft ) <- currentPlan( PlanId, Plan, PlanType ) and
+										teamMate(TeamMate) | 
+	{
+		// if we finished an action thats was part of a joint plan, tell the other agent we finished
+		if B(PlanType = joint) then 
+		{
+			send( TeamMate, inform, jointActFinished(PlanId ) );
+			executeFirstJointAction()
+		} else
+		{
+			executeFirstAction()
+		}
+	}
+	
+	

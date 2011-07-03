@@ -1,0 +1,175 @@
+PC-rules:
+
+// ----------------------- determine subgoal priorities ----------
+	determineSubgoals(_) <- baseCP(BaseX,BaseY) and baseHP(BaseHP) and numUnits(NumUnits) and
+							ownCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
+							enemyBases(EnemyBases) and wta(WTA) and subgoal(_,CurPr) | 
+	{
+	[	
+		@starcraft(allocatePriorities( BaseX,BaseY, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
+		
+		// remember the current priority to compare later
+		RememberPriority(CurPr);
+		
+		if B(Ret = [actionresult([AttackPr, DefendPr])]) then 
+		{
+			print(attackPriority(AttackPr));
+			print(defendPriority(DefendPr));
+			// choose the subgoal that has the highest priority
+			if B(AttackPr > DefendPr) then {
+				SetSubgoal(attack, AttackPr)
+			} else {
+				SetSubgoal(defend, DefendPr)
+			}
+		};
+
+		selectPotentialPlans(0)
+	]
+	}
+	
+	// ----------------------- selecting the potential plans ----------
+	// first select the most relevant plan.
+	selectPotentialPlans(_) <- subgoal(Subgoal,NewPr) | 
+	{
+	[
+		B(selectPlan(NewPlanId, NewPr, Subgoal));
+		
+		SetNewPlan(NewPlanId);
+		
+		sharePlans(0);
+		selectRelevantPlan(0)
+	]
+	}
+	
+	// ----------------------- sharing a plan, sending and receiving ----------
+	sharePlans(_) <- newPlan(NewPlanId) and teamMate(TeamMate) | {
+	[
+		send( TeamMate, inform, plan(NewPlanId) );
+		PlanShared()
+	]
+	}
+	
+	// -----------------------  select most relevant plan ----------
+	// see flowchart on Google Docs for a better overview of this method
+	selectRelevantPlan(_) <- planShared and planRcvd and 
+					newPlan(OwnPlanId) 	and plan(OwnPlanId, OwnPr, OwnSubgoal, OwnJointPlan, OwnSinglePlan) and
+					coPlan(CoPlanId) 	and plan(CoPlanId, CoPr, CoSubgoal, CoJointPlan, CoSinglePlan) |
+	{
+	[
+		print(coplanid(CoPlanId));
+		ResetComm();
+		
+		if B(not (OwnJointPlan = [])) then 
+		{
+			if B(not (CoJointPlan = [])) then
+			{
+				if B(OwnPr > CoPr) then
+				{
+					if B(not (CoSubgoal = defend)) then
+					{
+						setPlan(OwnPlanId, OwnJointPlan, joint)
+					} else {
+						setPlan(OwnPlanId, OwnSinglePlan, single)
+					}
+				} else if B(OwnPr = CoPr) then 
+				{
+					setPlan(OwnPlanId, OwnSinglePlan, single)
+				} else 
+				{
+					if B(not (OwnSubgoal = defend)) then
+					{
+						setPlan(CoPlanId, CoJointPlan, joint)
+					} else
+					{
+						setPlan(OwnPlanId, OwnSinglePlan, single)
+					}
+				}
+			} else
+			{
+				if B(OwnPr < CoPr and not (CoSubgoal = defend)) then
+				{
+					setPlan(OwnPlanId, OwnJointPlan, joint)
+				} else
+				{
+					setPlan(OwnPlanId, OwnSinglePlan, single)
+				}
+			}
+		} else
+		{
+			if B(not(CoJointPlan = []) and not(OwnSubGoal = defend)) then 
+			{
+				if B(CoPriority =< OwnPriority) then
+				{
+					setPlan(OwnPlanId, OwnSinglePlan, single)
+				} else
+				{
+					setPlan(CoPlanId, CoJointPlan, joint)
+				}
+			} else
+			{
+				setPlan(OwnPlanId, OwnSinglePlan, single)
+			}
+		}
+	]
+	}
+	
+	// ----------------------- execution of plan; only if it differs from the current plan -----------------
+	setPlan(NewPlanId, NewPlan, NewPlanType) <- currentPlan(CurrentPlanId, CurrentPlan, CurrentPlanType) |
+	{
+	[
+		if B(not (NewPlanId = CurrentPlanId)) then 
+		{
+			SetPlan(NewPlanId, NewPlan, NewPlanType);
+			executeFirstAction()
+		};
+		
+		SetIdle()
+	]
+	}
+	
+	executeFirstAction() <- currentPlan(PlanId, Plan, PlanType) | 
+	{
+		// first check whether the plan is not empty
+		if B( Plan = [Action|Rest] ) then 
+		{
+			performAction(Action);
+			SetPlan(PlanId, Rest, PlanType)
+		} else
+		{
+			PlanFinished()
+		}
+	}
+
+	executeFirstJointAction() <- currentPlan( PlanId, Plan, joint ) and jointActFinished(1) | 
+	{
+	[
+		if B(Plan = [Action|Rest]) then 
+		{
+			performAction(Action);
+			SetPlan(PlanId, Rest, joint);
+			ResetJointAct()
+		}
+	]
+	}
+	
+	performAction(Action) <- true |
+	{
+		print(action(Action));
+		@starcraft(action(Action), _)
+	}
+	
+		message( TeamMate, inform, _, _, jointActFinished( PlanId ) ) <- teamMate( TeamMate ) | 
+	{
+	[
+		JointActFinsh()
+	]
+	}
+	
+	message( TeamMate, inform, _, _, plan( CoPlanId ) ) <- teamMate( TeamMate ) | 
+	{
+	[
+		SetCoPlan(CoPlanId);
+		PlanRcvd()
+	]
+	}
+	
