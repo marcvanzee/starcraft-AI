@@ -27,11 +27,11 @@ public class Agent
 	 * 
 	 * @param agName	Name of the agent, useful to match it with the BDI agent
 	 */
-	public Agent(String agName, BWAPICoop _bwapi) 
+	public Agent(String agName, BWAPICoop _bwapi, double wta) 
 	{
 		this._agName = agName;
 		this._bwapi = _bwapi;
-		this._WTA = new Random().nextFloat(); // nextInt(11);
+		this._WTA = wta; // nextInt(11);
 	}
 	
 	/**

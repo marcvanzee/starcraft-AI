@@ -46,7 +46,7 @@ public class CoopEventListener implements BWAPIEventListener
 		//Loads the map, use false else starcraft might freeze.
 		_env._bwapi.loadMapData(false);
 		
-		_env._bwapi.setGameSpeed(20);
+		//_env._bwapi.setGameSpeed(20);
 	}
 
 	/**
@@ -208,15 +208,12 @@ public class CoopEventListener implements BWAPIEventListener
 			} else if (enemy.getTypeID() == UnitTypes.Terran_Supply_Depot.ordinal()) 
 			{
 				countBuildings++;
-				enemyBuildings.add(new APLList(new APLNum(enemy.getID()), new APLNum(enemy.getHitPoints())));;
+				enemyBuildings.add(new APLList(new APLNum(enemy.getID()), new APLNum(enemy.getHitPoints()), new APLNum(enemy.getX()), new APLNum(enemy.getY())));;
 			}
 		}
 
 		enemyU = new APLList(enemyUnits);
 		enemyB = new APLList(enemyBuildings);
-
-		
-	
 		
 		for (Agent agent : _env._agents.values()) 
 		{

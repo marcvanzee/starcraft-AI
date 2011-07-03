@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 
-import starcraft.actions.AbstractAction;
-import starcraft.actions.Attack;
-import starcraft.actions.DefendBuildingAction;
-import starcraft.actions.ExploreNearestBase;
-import starcraft.actions.GatherForAttackBuilding;
+import starcraft.actions.*;
+import starcraft.gui.Window;
 import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -37,10 +35,13 @@ public class Env extends apapl.Environment
 	private Thread _clientThread;
 	private CoopEventListener _listener;
 	
+	final protected Window _window;
+	
 	// ------------------------------------------ CONSTRUCTORS -------------------------------------
 	
 	public Env()
 	{
+		_window = new Window();
 		init();
 		_logger.info("Environment Initialised..");
 	}
@@ -58,8 +59,6 @@ public class Env extends apapl.Environment
 		_listener = new CoopEventListener(this);
 		_bwapi = new BWAPICoop(_listener);
 		_clientThread = new Thread(new BWAPIClient(_bwapi));
-		
-		
 	}
 		
 	/**
@@ -102,7 +101,9 @@ public class Env extends apapl.Environment
 		if (_agents.size() < TOTAL_AGENTS) 
 		{
 			_logger.info(agentName + " registered");
-			_agents.put(agentName, new Agent(agentName,_bwapi));
+			double wta = new Random().nextFloat();
+			_agents.put(agentName, new Agent(agentName,_bwapi, wta));
+			_window.setWta(agentName, wta);
 			if (_agents.size() == TOTAL_AGENTS) {
 				start();
 		}
@@ -294,7 +295,7 @@ public class Env extends apapl.Environment
 			return exploreDefensive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2));
 		else if (action.equals("exploreAggressive") && (l.size() ==  3))
 			return exploreAggressive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2));
-		else if (action.equals("attackPos") && (l.size() ==  5))
+		else if (action.equals("attack") && (l.size() ==  5))
 			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
 		else if (action.equals("attackUnit") && (l.size() ==  4))
 			return attackUnit(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3));
@@ -475,8 +476,41 @@ public class Env extends apapl.Environment
 		}
 		
 		APLList ret = new APLList(new APLNum(attackPriority),new APLNum(defendPriority));
+		_window.setSubgoal(agentName, attackPriority, defendPriority);
 		
 		return ret;
+	}
+	
+	public synchronized Term selectedPlan(String agentName, APLNum planId, APLList jointPlan, APLList singlePlan)
+		throws ExternalActionFailedException
+	{
+		_window.selectedPlan(agentName, planId.toInt(), jointPlan.toString(), singlePlan.toString());
+		
+		return wrapBoolean(true);
+	}
+	
+	public synchronized Term receivedPlan(String agentName)
+		throws ExternalActionFailedException
+	{
+		_window.receivedPlan(agentName);
+		
+		return wrapBoolean(true);
+	}
+	
+	public synchronized Term newPlan(String agentName, APLList plan)
+		throws ExternalActionFailedException
+	{
+		_window.newPlan(agentName, plan.toString());
+		
+		return wrapBoolean(true);
+	}
+	
+	public synchronized Term continuePlan(String agentName)
+		throws ExternalActionFailedException
+	{
+		_window.continuePlan(agentName);
+		
+		return wrapBoolean(true);
 	}
 	
 	// ------------------------------------------ PUBLIC NOT-2APL METHODS ------------------------
