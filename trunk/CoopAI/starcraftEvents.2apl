@@ -44,7 +44,7 @@ PC-rules:
 	}
 	
 	// ----------------------- Thrown by environment indicating an action is finished. -------
-	event( actionPerformed( PlanId ), starcraft ) <- currentPlan( PlanId, Plan, PlanType ) and
+	event( actionPerformed( _ ), starcraft ) <- currentPlan( PlanId, Plan, PlanType ) and
 										teamMate(TeamMate) | 
 	{
 		// if we finished an action thats was part of a joint plan, tell the other agent we finished
