@@ -1,205 +1,114 @@
+/** The agent is written exactly as explained in the document 
+ * "Reasoning cycle" that can be found on Google Docs.
+ */
+ 
+/** Includes 
+ */
+
+Include: starcraftEvents.2apl
+Include: plans.2apl
+Include: reasoningCycle.2apl
+
 BeliefUpdates:
-	{true} EnvironmentLoaded() 	{environmentLoaded}
-	{true} Connected()  {connected}
-	{true} GameStarted() {gameStarted}
-	{true} EndGame()	{winGame}
+
+/** ---------------------- reasoning cycle ----------------------------------------------------------
+ *
+ * the reasoning cycle can be found in the flow chart of Google docs
+ *
+ *
+ * ---------------- explanation of beliefs that are used -----------------------------------------
+ *
+ * the character of the agent is defined as the willingness to attack (WTA) and it is 
+ * assigned once when the game starts.
+ * 		wta(X), with X € [0,1,..,10]
+ *
+ * There are two subgoals, which both are assigned a priority at the beginning of each update
+ * the winning priority will be the goal that the agent will try to pursue
+ * these are the subgoals together with their priority
+ * the priority depends on the WTA and the current situation
+ * 		subgoal(Subgoal, X), with Subgoal € [attack,defend] and X € [0,1,...,10]
+ *
+ * beliefs that are assigned to the agent at the beginning of the game and do not change
+ * 		baseCP(X,Y)			center point of the base
+ * 		numUnits(X)			number of units
+ *
+ * beliefs that are assigned to the agent are every game update
+ * 		unitsCP(X,Y)     	center point of own units
+ * 		baseHP(X)			health Points of the own base
+ * 		numEnemyUnits(X)	number of enemy units that are currently visible
+ * 		enemies(L)			a list that contains the location and the HP of the visible enemies
+ *		enemyBases(L)		a list that contains the location and the HP of the visible bases of the enemy
+ *
+ */
+
+
+	// initial beliefs, when game starts
+	{true} 					SetTeamMate(X) 		{teamMate(X)}
+	{true} 					SetWta(X) 			{wta(X), wtaTresholdInUnits(2*X)}
+	{true} 					SetUnits(X)			{numUnits(X)}
+	{true}					SetBaseCP(X,Y)		{baseCP(X,Y)}									// Pos = [X,Y]
+	{true}					SetCoBaseCP(X,Y)		{coBase(X,Y)}
 	
-		{centerPoint(A,B) and baseHP(C) and numEnemies(D) and enemyUnits(E) and enemyBuildings(F)}
-	GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings)
-		{not centerPoint(A,B), not baseHP(C), not numEnemies(D), not enemyUnits(E), not enemyBuildings(F), centerPoint(CPX,CPY), baseHP(BaseHP), numEnemies(NumEnemies), enemyUnits(EnemyUnits), enemyBuildings(EnemyBuildings)}
+	// updated beliefs, when game updates
+	{numUnits(X)}			DestroyUnit()		{not numUnits(X), numUnits(X-1)}
+	{baseHP(X)}				SetBaseHP(Y)		{not baseHP(X), baseHP(Y)}
+	{ownCP(Pos)}			SetOwnCP(PosNew)	{not ownCP(Pos), ownCP(PosNew)}					// Pos,PosNew = [X,Y]
+	{numEnemies(X)}			SetNumEnemies(Y)	{not numEnemies(X), numEnemies(Y) }
+	{enemies(Pos)}			SetEnemies(PosNew)	{not enemies(Pos), enemies(PosNew)}
+	{enemyBases(L)}			SetEnemyBases(Lnew)	{not enemyBases(L), enemyBases(Lnew)}
 	
-	{currentIntention(_,X,Y)} AdvanceToNextStage() {currentIntention(_,X+1,Y)}
-		
-	{true} NewTeamMate(X) {teammates(X)}
-		
-	{wta(X)} SetWta(Y) {not wta(X), wta(Y)}
+	// other beliefs, for internal processing
+	{true}					SetBusy()			{busy}
+	{true}					SetIdle()			{not busy}
+	{subgoal(X,Y)}			SetSubgoal(X1,Y1)	{not subgoal(X,Y), subgoal(X1,Y1)}
+	{curPriority(X)}		RememberPriority(Y)	{not curPriority(X), curPriority(Y)}
 	
-	{currentIntention( X1, Y1, Z1 )} SetCurrentIntention(X2,Y2,Z2) {not currentIntention( X1, Y1, Z1 ),currentIntention( X2,Y2,Z2)}
+	{currentPlan(Id,X1,X2)}	SetPlan(IdNew,Y1,Y2){not currentPlan(Id, X1,X2), currentPlan(IdNew, Y1,Y2)}
+	{newPlan(X)}			SetNewPlan(X2)		{not newPlan(X), newPlan(X2)}
+	{currentPlan(Id,X1,X2)} PlanFinished()		{not currentPlan(Id, X1,X2), currentPlan(0,[],0)}
+	
+	{coPlan(X)}				SetCoPlan(Y)		{not coPlan(X), coPlan(Y)}
+	
+	// communication
+	{true}					PlanShared()		{planShared}
+	{true}					PlanRcvd()			{planRcvd}
+	{jointActFinished(X)}	JointActFinsh()		{not jointActFinished(X), jointActFinished(1)}
+	
+	{true}					ResetComm()			{not planShared, not planRcvd}
+	{jointActFinished(X)}	ResetJointAct()		{not jointActFinished(X), jointActFinished(0)}	
 
 Beliefs:
-	//initial values
-	centerPoint(0,0).
+// beliefs required for belief updates
+	numUnits(0).
 	baseHP(0).
+	ownCP(0).
 	numEnemies(0).
-	enemyUnits([]).
-	enemyBuildings([]).
+	enemies(0).
+	enemyBases(0).
+	subgoal(0,0).
+	curPriority(0).
+	
+	newPlan(0).
+	currentPlan(0,[],0). // currentPlan(Id,Plan,Subgoal)
+	
+	coPlan(0).
+	jointPlanFinished(0).
+	
+	wtaTresHoldToAttack(0.5).
+	
+	weakestBase([[Id,Min]],Id,Min).
+
+	weakestBase([[H1,H2],[K1,K2]|T],New,M) :-
+    	H2 =< K2,
+    	weakestBase([[H1,H2]|T],New,M).
+
+	weakestBase([[H1,H2],[K1,K2]|T],New,M) :-
+    	H2 > K2,
+    	weakestBase([[K1,K2]|T],New,M).
+
+	selectPlan(PlanId, Pr, Subgoal) :-
+		plan(PlanId, Pr, Subgoal, _ , _).
 
 	
-	planParent( attackBuilding, attack ).
-	planParent( explore, attack ).
-	planParent( defendBuilding, defend ).
-	
-	
-	count(0).
-	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
-	currentGoal(attack,7).
-	//the current intention name and the stage it is in. 1 is the starting stage.
-	//currentIntention(attackBuildingCharlie, 1).
-	// Roemer: included priority
-	currentIntention(attackBuildingCharlie, 1, 0.5).	
-	wta(0).
-	prob(P) :- is(X, rand), X < P.
-	
-	
-
-	
-	
-Goals:
-	environmentLoaded
-	//,attack
-	
-PG-rules:
-
-environmentLoaded <- true |
-{
-	@starcraft(hello(),_);
-	adopta(connected);
-	EnvironmentLoaded()
-}
-
-
-winGame <- gameStarted |
-{
-	print(defeatEnemy);
-	@starcraft(explore(explore,1,2),_);
-	EndGame()
-}
-
-PC-rules:		
-    
-   
-    
-    %Note the use of a function with parameter as events, since functions with no parameters are not supported.
-	%Also not that you cannot use another function in this function, it will be ignored. 
-	%So use lists (with sublists) to differtentiate between parameters.
-	
-	
-	event(gameUpdate([CPX,CPY], BaseHP, NumEnemies, EnemyUnits, EnemyBuildings), starcraft) <- true |
-	{
-		GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings);
-		skip		
-	}
-	
-	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2, X)|
-	{
-		AdvanceToNextStage();
-		skip
-	}
-	
-	
-	
-	event(connected(_),starcraft) <- true |
-	{
-		adopta(gameStarted);
-		Connected();
-		print(connected);
-		skip
-	}
-	
-	event(gameStarted( Wta, Units, BaseLocation ),starcraft) <- true |
-	{
-		SetWta( Wta );
-		adopta(winGame);
-		
-		if B( Wta > 0.5 ) then	// or: if B( prob( Wta ) ) then....
-		{ adopta( attack ) }
-		else
-		{ adopta( defend ) };
-		
-		GameStarted();
-		print(gamestarted);
-		skip
-	}
-	
-	event(enemyUnitDiscovered(EnemyId), starcraft ) <- true |
-	{
-		print(enemyUnitDiscovered(EnemyId));
-		@starcraft(attackUnit(attack,EnemyId),_)
-	}
-	
-	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
-	{
-		print(ownUnitDestroyed(UnitsLeft));
-		
-		skip
-	}
-	
-	event( teamMate(teammate), starcraft ) <- true |
-	{
-		NewTeamMate( teammate );
-		skip
-	}
-		
-	event( X, _) <- true |
-	{
-		print(event(X))
-	}
-	
-	
-	
-	
-// PC-rules for negotiaton
-
-	// Teammate makes attack-proposal but now defending, so don't obey
-	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
-		currentIntention( CurrentIntention, _, _ ) and 
-		planParent( CurrentIntention, defend ) and 
-		planParent( ProposalPlan, attack ) |
-	{
-		// ignore request
-		print(ignoreBecauseDefend);
-		informIgnoreJointPlan( TeamMate, ProposalPlan );
-		skip
-	}
-	
-	// Teammate makes attack-proposal and now attacking, so check priority
-	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
-		currentIntention( CurrentIntention, _, Priority2 ) and 
-		planParent( CurrentIntention, attack ) and 
-		planParent( ProposalPlan, _ ) |
-	{
-		if B( Priority >= Priority2 ) then
-		{
-			// obey request
-			print(obey);
-			dropgoal( attack );
-			adoptParentPlanOf( ProposalPlan );
-			SetCurrentIntention( ProposalPlan, 1, Priority );
-			informObeyJointPlan( TeamMate, ProposalPlan );
-			skip
-		}
-		else
-		{
-			// ignore request
-			print(ignoreBecausePriority);
-			informIgnoreJointPlan( TeamMate, ProposalPlan );
-			skip
-		};
-		skip
-	}
-
-	// helping method to adopt plan (adopta doesn't accept vars )
-	adoptParentPlanOf( Plan ) <- planParent( Plan, attack ) |
-	{ adopta( attack )}
-	
-	adoptParentPlanOf( Plan ) <- planParent( Plan, defend ) |
-	{ adopta( defend )}
-	
-	adoptParentPlanOf( Plan ) <- true |
-	{ print(unknownPlanParent(Plan)) }
-
-	
-	// reply to proposal negative
-	informIgnoreJointPlan( TeamMate, ProposalPlan ) <- true |
-	{
-		send( TeamMate, inform, ignoreJointPlan( ProposalPlan ) );
-		skip
-	}
-	
-	// reply to proposal positive
-	informObeyJointPlan( TeamMate, ProposalPlan ) <- true |
-	{
-		send( TeamMate, inform, obeyJointPlan( ProposalPlan ) );
-		skip
-	}
-	
+Plans:
+	@starcraft(hello(),_)

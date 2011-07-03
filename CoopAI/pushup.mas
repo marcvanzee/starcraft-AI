@@ -1,6 +1,0 @@
-<apaplmas>
-  <environment name="starcraft" file="ExampleAIClient.jar"/>
-  <agent name="officer1" file="newagent.2apl"/>
-  <agent name="officer2" file="newagent.2apl"/>
-</apaplmas>
-

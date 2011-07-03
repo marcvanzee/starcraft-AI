@@ -1,0 +1,205 @@
+BeliefUpdates:
+	{true} EnvironmentLoaded() 	{environmentLoaded}
+	{true} Connected()  {connected}
+	{true} GameStarted() {gameStarted}
+	{true} EndGame()	{winGame}
+	
+		{centerPoint(A,B) and baseHP(C) and numEnemies(D) and enemyUnits(E) and enemyBuildings(F)}
+	GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings)
+		{not centerPoint(A,B), not baseHP(C), not numEnemies(D), not enemyUnits(E), not enemyBuildings(F), centerPoint(CPX,CPY), baseHP(BaseHP), numEnemies(NumEnemies), enemyUnits(EnemyUnits), enemyBuildings(EnemyBuildings)}
+	
+	{currentIntention(_,X,Y)} AdvanceToNextStage() {currentIntention(_,X+1,Y)}
+		
+	{true} NewTeamMate(X) {teammates(X)}
+		
+	{wta(X)} SetWta(Y) {not wta(X), wta(Y)}
+	
+	{currentIntention( X1, Y1, Z1 )} SetCurrentIntention(X2,Y2,Z2) {not currentIntention( X1, Y1, Z1 ),currentIntention( X2,Y2,Z2)}
+
+Beliefs:
+	//initial values
+	centerPoint(0,0).
+	baseHP(0).
+	numEnemies(0).
+	enemyUnits([]).
+	enemyBuildings([]).
+
+	
+	planParent( attackBuilding, attack ).
+	planParent( explore, attack ).
+	planParent( defendBuilding, defend ).
+	
+	
+	count(0).
+	//The current goal name and the priority, which reflects o.a. the risk of the goal failing.
+	currentGoal(attack,7).
+	//the current intention name and the stage it is in. 1 is the starting stage.
+	//currentIntention(attackBuildingCharlie, 1).
+	// Roemer: included priority
+	currentIntention(attackBuildingCharlie, 1, 0.5).	
+	wta(0).
+	prob(P) :- is(X, rand), X < P.
+	
+	
+
+	
+	
+Goals:
+	environmentLoaded
+	//,attack
+	
+PG-rules:
+
+environmentLoaded <- true |
+{
+	@starcraft(hello(),_);
+	adopta(connected);
+	EnvironmentLoaded()
+}
+
+
+winGame <- gameStarted |
+{
+	print(defeatEnemy);
+	@starcraft(explore(explore,1,2),_);
+	EndGame()
+}
+
+PC-rules:		
+    
+   
+    
+    %Note the use of a function with parameter as events, since functions with no parameters are not supported.
+	%Also not that you cannot use another function in this function, it will be ignored. 
+	%So use lists (with sublists) to differtentiate between parameters.
+	
+	
+	event(gameUpdate([CPX,CPY], BaseHP, NumEnemies, EnemyUnits, EnemyBuildings), starcraft) <- true |
+	{
+		GameUpdate(CPX,CPY, BaseHP, NumEnemies, EnemyUnits, EnemyBuildings);
+		skip		
+	}
+	
+	event(actionPerformed(attackBuildingCharlie),starcraft) <- currentIntention(attackBuildingCharlie, 2, X)|
+	{
+		AdvanceToNextStage();
+		skip
+	}
+	
+	
+	
+	event(connected(_),starcraft) <- true |
+	{
+		adopta(gameStarted);
+		Connected();
+		print(connected);
+		skip
+	}
+	
+	event(gameStarted( Wta, Units, BaseLocation ),starcraft) <- true |
+	{
+		SetWta( Wta );
+		adopta(winGame);
+		
+		if B( Wta > 0.5 ) then	// or: if B( prob( Wta ) ) then....
+		{ adopta( attack ) }
+		else
+		{ adopta( defend ) };
+		
+		GameStarted();
+		print(gamestarted);
+		skip
+	}
+	
+	event(enemyUnitDiscovered(EnemyId), starcraft ) <- true |
+	{
+		print(enemyUnitDiscovered(EnemyId));
+		@starcraft(attackUnit(attack,EnemyId),_)
+	}
+	
+	event(ownUnitDestroyed(UnitsLeft), starcraft ) <- true |
+	{
+		print(ownUnitDestroyed(UnitsLeft));
+		
+		skip
+	}
+	
+	event( teamMate(teammate), starcraft ) <- true |
+	{
+		NewTeamMate( teammate );
+		skip
+	}
+		
+	event( X, _) <- true |
+	{
+		print(event(X))
+	}
+	
+	
+	
+	
+// PC-rules for negotiaton
+
+	// Teammate makes attack-proposal but now defending, so don't obey
+	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
+		currentIntention( CurrentIntention, _, _ ) and 
+		planParent( CurrentIntention, defend ) and 
+		planParent( ProposalPlan, attack ) |
+	{
+		// ignore request
+		print(ignoreBecauseDefend);
+		informIgnoreJointPlan( TeamMate, ProposalPlan );
+		skip
+	}
+	
+	// Teammate makes attack-proposal and now attacking, so check priority
+	message( TeamMate, ProposalPlan, Priority ) <- teamMates( TeamMate ) and
+		currentIntention( CurrentIntention, _, Priority2 ) and 
+		planParent( CurrentIntention, attack ) and 
+		planParent( ProposalPlan, _ ) |
+	{
+		if B( Priority >= Priority2 ) then
+		{
+			// obey request
+			print(obey);
+			dropgoal( attack );
+			adoptParentPlanOf( ProposalPlan );
+			SetCurrentIntention( ProposalPlan, 1, Priority );
+			informObeyJointPlan( TeamMate, ProposalPlan );
+			skip
+		}
+		else
+		{
+			// ignore request
+			print(ignoreBecausePriority);
+			informIgnoreJointPlan( TeamMate, ProposalPlan );
+			skip
+		};
+		skip
+	}
+
+	// helping method to adopt plan (adopta doesn't accept vars )
+	adoptParentPlanOf( Plan ) <- planParent( Plan, attack ) |
+	{ adopta( attack )}
+	
+	adoptParentPlanOf( Plan ) <- planParent( Plan, defend ) |
+	{ adopta( defend )}
+	
+	adoptParentPlanOf( Plan ) <- true |
+	{ print(unknownPlanParent(Plan)) }
+
+	
+	// reply to proposal negative
+	informIgnoreJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, ignoreJointPlan( ProposalPlan ) );
+		skip
+	}
+	
+	// reply to proposal positive
+	informObeyJointPlan( TeamMate, ProposalPlan ) <- true |
+	{
+		send( TeamMate, inform, obeyJointPlan( ProposalPlan ) );
+		skip
+	}
+	
