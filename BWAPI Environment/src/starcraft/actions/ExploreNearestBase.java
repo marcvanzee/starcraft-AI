@@ -182,7 +182,7 @@ public class ExploreNearestBase extends AbstractAction
 					return true;
 				}
 			}
-			if(count > 2)
+			if(count > _usingUnits.size() / 2)
 			{
 				//System.out.println("TARGET NOT REACHED!!" + pos + "  distance: " + pos.distance(_enemyBuildingToExplore));
 				return false;

@@ -11,6 +11,7 @@ import starcraft.actions.AbstractAction;
 import starcraft.actions.Attack;
 import starcraft.actions.DefendBuildingAction;
 import starcraft.actions.ExploreNearestBase;
+import starcraft.actions.GatherForAttackBuilding;
 import apapl.ExternalActionFailedException;
 import apapl.data.APLFunction;
 import apapl.data.APLIdent;
@@ -295,8 +296,12 @@ public class Env extends apapl.Environment
 			return exploreAggressive(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2));
 		else if (action.equals("attackPos") && (l.size() ==  5))
 			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
-		else if (action.equals("attackUnit") && (l.size() ==  5))
-			return attackPos(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3), (APLNum)l.get(4));
+		else if (action.equals("attackUnit") && (l.size() ==  4))
+			return attackUnit(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3));
+		else if (action.equals("gatherForAttackBuilding") && (l.size() == 5))
+			return gatherForAttackBuilding(agentName, (APLIdent) l.get(1), (APLIdent) l.get(2), (APLNum) l.get(3), (APLNum) l.get(4));
+		else if (action.equals("attackEnemieBuilding") && (l.size() ==  4))
+			return attackUnit(agentName, (APLIdent)l.get(1), (APLIdent)l.get(2), (APLNum)l.get(3));
 		else
 			return wrapBoolean(false);
 		}
@@ -394,6 +399,24 @@ public class Env extends apapl.Environment
 			
 			AbstractAction  attackAction  = new Attack(actionIdentifier.toString(), isJoint, agent.getUnits(), units);
 			agent.getPlanBase().insertReplace(attackAction);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		return wrapBoolean(true);
+	}
+	
+	public synchronized Term gatherForAttackBuilding(String agentName, APLIdent actionIdentifier, APLIdent actionType, APLNum X, APLNum Y)
+	{
+		try
+		{
+			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
+			Agent agent = _agents.get(agentName);
+			
+			AbstractAction  gatherAction  = new GatherForAttackBuilding(actionIdentifier.toString(), isJoint, agent.getUnits(), new Point(X.toInt(),Y.toInt()), agent.getCP(), agent.getCoBasePos());
+			agent.getPlanBase().insertReplace(gatherAction);
 		}
 		catch(Exception e)
 		{
