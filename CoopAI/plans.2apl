@@ -16,8 +16,11 @@ Beliefs:
 	plan( 32, 5,	defend, [], [[exploreDefensive,s15,single]] ) :- enemyBases(L), (L = []).
 	
 	// ATTACKING
-	plan( 100,10,	attack, [[gatherForAttackBuilding,j16,joint,X], [attackEnemyBuilding,j19,joint,X]], [[attackEnemyBuilding,s22,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
-	plan( 101, 9,	attack, [[gatherForAttackBuilding,j17,joint,X], [attackEnemyBuilding,j20,joint,X]], [[attackEnemyBuilding,s23,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
+	//plan( 100,10,	attack, [[gatherForAttackBuilding,j16,joint,X], [attackEnemyBuilding,j19,joint,X]], [[attackEnemyBuilding,s22,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
+	//plan( 101, 9,	attack, [[gatherForAttackBuilding,j17,joint,X], [attackEnemyBuilding,j20,joint,X]], [[attackEnemyBuilding,s23,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
+	
+	plan( 100,10,	attack, [[attackEnemyBuilding,j19,joint,X]], [[attackEnemyBuilding,s22,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
+	plan( 101, 9,	attack, [[attackEnemyBuilding,j20,joint,X]], [[attackEnemyBuilding,s23,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
 	
 	plan( 110, 8,	attack, [], [[attackEnemyBuilding,s25,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
 	plan( 111, 7,	attack, [], [[attackEnemyBuilding,s26,single,X]] ) :- enemyBases(L), not( L = []), weakestEnemyBase(X).
