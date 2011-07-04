@@ -8,7 +8,7 @@ PC-rules:
 		SetUnits(Units);
 		SetBaseCP(BaseX,BaseY);
 		SetCoBaseCP(CoBaseX,CoBaseY);
-		print(gamestarted(BaseX,BaseY,CoBaseX,CoBaseY))
+		print(gamestarted(BaseX,BaseY,CoBaseX,CoBaseY,Units))
 	]
 	}
 	

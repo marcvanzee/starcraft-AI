@@ -79,13 +79,12 @@ BeliefUpdates:
 
 Beliefs:
 // beliefs required for belief updates
-	numUnits(0).
 	baseHP(0).
 	ownCP(0).
 	numEnemies(0).
 	enemies(0).
 	enemyBases(0).
-	subgoal(0,0).
+	subgoal(null,0).
 	curPriority(0).
 	
 	newPlan(0).
@@ -96,15 +95,17 @@ Beliefs:
 	
 	wtaTresHoldToAttack(0.5).
 	
-	weakestBase([[Id,Min]],Id,Min).
+	weakestEnemyBase(X) :- enemyBases(L), weakestBase(L,X,_).
+	
+	weakestBase([[Id,Min,_,_]],Id,Min).
 
-	weakestBase([[H1,H2],[K1,K2]|T],New,M) :-
+	weakestBase([[H1,H2,_,_],[K1,K2,_,_]|T],New,M) :-
     	H2 =< K2,
-    	weakestBase([[H1,H2]|T],New,M).
+    	weakestBase([[H1,H2,_,_]|T],New,M).
 
-	weakestBase([[H1,H2],[K1,K2]|T],New,M) :-
+	weakestBase([[H1,H2,_,_],[K1,K2,_,_]|T],New,M) :-
     	H2 > K2,
-    	weakestBase([[K1,K2]|T],New,M).
+    	weakestBase([[K1,K2,_,_]|T],New,M).
 
 	selectPlan(PlanId, Pr, Subgoal) :-
 		plan(PlanId, Pr, Subgoal, _ , _).
