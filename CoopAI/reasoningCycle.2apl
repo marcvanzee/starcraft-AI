@@ -3,10 +3,10 @@ PC-rules:
 // ----------------------- determine subgoal priorities ----------
 	determineSubgoals(_) <- baseCP(BaseX,BaseY) and baseHP(BaseHP) and numUnits(NumUnits) and
 							ownCP(UnitCP) and numEnemies(NumEnemies) and enemies(Enemies) and
-							enemyBases(EnemyBases) and wta(WTA) and subgoal(_,CurPr) | 
+							enemyBases(EnemyBases) and wta(WTA) and subgoal(Subgoal,CurPr) | 
 	{
 	[	
-		@starcraft(allocatePriorities( BaseX,BaseY, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
+		@starcraft(allocatePriorities( Subgoal,CurPr, BaseHP, NumUnits, UnitCP, NumEnemies, Enemies, EnemyBases, WTA ), Ret);
 		
 		// remember the current priority to compare later
 		RememberPriority(CurPr);
