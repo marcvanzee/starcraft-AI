@@ -427,51 +427,85 @@ public class Env extends apapl.Environment
 		return wrapBoolean(true);
 	}
 	
-	public synchronized Term allocatePriorities( String agentName, APLNum baseX, APLNum baseY, APLNum BaseHP, 
+	public synchronized Term allocatePriorities( String agentName, APLIdent lastSubgoal, 
+												 APLNum lastPriority, APLNum BaseHP, 
 												 APLNum NumUnits, APLList UnitCP, 
 												 APLNum NumEnemies, APLList Enemies, 
 												 APLList EnemyBases, APLNum WTA ) 
 	throws ExternalActionFailedException
 	{
+		
+		System.out.println("in alloctePriorities: basHP(" + BaseHP + ") numUnits(" + NumUnits + ") Numnmis(" + NumEnemies + ") WTA(" +  WTA + ").");
+			
+		int lastAttackPriority = lastSubgoal.toString().equals("attack") ? lastPriority.toInt() : 10 - lastPriority.toInt();
+		int lastDefendPriority = lastSubgoal.toString().equals("attack") ? 10 - lastPriority.toInt() :  lastPriority.toInt();
+		
 		int defendPriority = 0;
 		int attackPriority = 0;
 		
-		// first of all, look if there are enemies around
-		if (Enemies.isEmpty()) 
+		//Either just started, 
+		if(Enemies.isEmpty())
 		{
-			// is there an enemybase?
-			if (EnemyBases.isEmpty()) 
+			//just started
+			if(EnemyBases.isEmpty())
 			{
-				// there is nothing, so we will defend or attack depending on our WTA
-				// both priorities will be very low, so an important event will be able
-				// to interrupt it easily
-				
-				// the WTA has domain [0,1], so these priorities are not able to exceed 0,1
-				attackPriority =      (int) Math.round(Math.random() * WTA.toDouble() * 10);
+				if(lastSubgoal.toString().equals("null"))
+				{
+					attackPriority = (int) Math.round(Math.random() * 7) + 3;
+					defendPriority = 10 - attackPriority;
+				}
+				else
+				{
+					attackPriority = lastAttackPriority;
+					defendPriority = lastDefendPriority;
+				}
+			}
+			//all enemies are killed.
+			else
+			{
+				attackPriority = 10;
 				defendPriority = 10 - attackPriority;
-			} 
-			else 
-			{
-				// there is an enemy-base, but no enemy characters: attack it!
-				attackPriority = 10;
-				defendPriority = 0;
 			}
-		} 
-		else 
+		}
+		//base is damaged and enemy units is implicitly > 0
+		else if(BaseHP.toInt() < 500)
 		{
-			// there are enemies, ohoh, better watch out
-			// first see if we are with more units
-			if (NumUnits.toInt() > NumEnemies.toInt()/2) 
+			//defend based on enemies and hp
+				attackPriority = (BaseHP.toInt() / 500) * (NumUnits.toInt() - (NumEnemies.toInt()/2)) * 2;
+				defendPriority = 10 - attackPriority;
+		}
+		else
+		{
+			attackPriority = (NumUnits.toInt() - (NumEnemies.toInt()/2)) + 6 ;
+			defendPriority = 10 - attackPriority;
+			//attack based on unit/enemies ratio.
+		}
+			
+		
+		//apply wta
+		attackPriority = (int) Math.min(Math.round(attackPriority + (WTA.toDouble() * 2)), 10);
+		defendPriority = 10 - attackPriority;
+		
+		if(!lastSubgoal.toString().equals("null"))
+		{
+			int changeInPriority =  Math.abs (attackPriority - lastAttackPriority);
+		
+			//change subgoals.. 
+			if(attackPriority > 0.5 && lastAttackPriority <= 0.5)
 			{
-				// attack the enemy
-				attackPriority = 10;
-				defendPriority = 0;
+				if(changeInPriority < 2 )
+				{
+					attackPriority = lastAttackPriority;
+					defendPriority = 10 - attackPriority;
+				}
 			}
-			else {
-				// we are with less units, shit!
-				// RETREAT RETREAT!!!
-				defendPriority = 10;
-				attackPriority = 0;
+			else if(attackPriority <= 0.5 && lastAttackPriority > 0.5)
+			{
+				if(changeInPriority < 2 )
+				{
+					attackPriority = lastAttackPriority;
+					defendPriority = 10 - attackPriority;
+				}
 			}
 		}
 		
