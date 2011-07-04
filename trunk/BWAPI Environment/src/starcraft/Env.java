@@ -101,7 +101,13 @@ public class Env extends apapl.Environment
 		if (_agents.size() < TOTAL_AGENTS) 
 		{
 			_logger.info(agentName + " registered");
-			double wta = new Random().nextFloat();
+//			double wta = new Random().nextFloat();
+			double wta;
+			if( agentName.equals("officer1"))
+				wta = 0.2;
+			else
+				wta = 0.8;
+			
 			_agents.put(agentName, new Agent(agentName,_bwapi, wta));
 			_window.setWta(agentName, wta);
 			if (_agents.size() == TOTAL_AGENTS) {
@@ -317,7 +323,7 @@ public class Env extends apapl.Environment
 	{
 		try
 		{
-			System.out.println("In defendBuilding");
+			System.out.println("In defendBuilding " + actionType.toString().toLowerCase() );
 			
 			boolean isJoint = actionType.toString().toLowerCase().equals("joint") ? true : false;
 			
@@ -483,6 +489,17 @@ public class Env extends apapl.Environment
 			
 		
 		//apply wta
+		if( WTA.toDouble() <= 0.5 )
+		{
+			attackPriority = (int) Math.min(Math.round(attackPriority + (WTA.toDouble() * 2)), 10);
+			defendPriority = 10 - attackPriority;
+		}
+		else
+		{
+			defendPriority = (int) Math.min(Math.round(defendPriority + (WTA.toDouble() * 2)), 10);
+			attackPriority = 10 - defendPriority;
+		}
+		
 		attackPriority = (int) Math.min(Math.round(attackPriority + (WTA.toDouble() * 2)), 10);
 		defendPriority = 10 - attackPriority;
 		

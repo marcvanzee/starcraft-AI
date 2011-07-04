@@ -331,6 +331,9 @@ public class CoopEventListener implements BWAPIEventListener
 		// update information
 		//updateAgents();
 		
+		
+
+		System.out.println("gameStarted in Coop");
 		_gameStarted = true;
 		
 		_env.broadcastTeammates();
