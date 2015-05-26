@@ -1,0 +1,1 @@
+A starcraft AI focused on cooperation which uses the JNI BWAPI for interacting with starcraft and 2APL for the implementation of the AI.
